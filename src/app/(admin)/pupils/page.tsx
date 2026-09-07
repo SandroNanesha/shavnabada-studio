@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getPupils, getGroups, getClassifications, getPayments } from '@/lib/data'
 import PupilsView from '@/components/admin/pupils/PupilsView'
 

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { notFound } from 'next/navigation'
 import { getPupil, getGroups, getClassifications, getPayments, getTags } from '@/lib/data'
 import PupilDetail from '@/components/admin/pupils/PupilDetail'

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getTeachers, getGroups } from '@/lib/data'
 import TeachersClient from './TeachersClient'
 

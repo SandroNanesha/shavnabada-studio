@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getClassifications } from '@/lib/data'
 import ClassificationsView from '@/components/admin/ClassificationsView'
 

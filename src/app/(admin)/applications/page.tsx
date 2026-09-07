@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getApplications } from '@/lib/data'
 import ApplicationsView from '@/components/admin/ApplicationsView'
 
