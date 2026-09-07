@@ -218,8 +218,9 @@ export default function PupilsTable({
         </thead>
         <tbody>
           {pupils.map((pupil, rowIdx) => {
-            const primaryGroup = pupil.enrollments[0]?.groupId
-            const groupName = primaryGroup ? (groupMap.get(primaryGroup) ?? '—') : '—'
+            const activeGroupNames = pupil.enrollments
+              .filter(e => !e.endDate)
+              .map(e => groupMap.get(e.groupId) ?? '—')
             const pupilLedger = ledgerMap.get(pupil.id)
 
             const isHovered = hoveredRow === pupil.id
@@ -245,8 +246,12 @@ export default function PupilsTable({
                   {pupil.surname}
                 </td>
                 {/* Group */}
-                <td style={stickyTd(LEFT_GROUP, COL_GROUP, true, isHovered)}>
-                  {groupName}
+                <td style={{ ...stickyTd(LEFT_GROUP, COL_GROUP, true, isHovered), whiteSpace: 'normal' }}>
+                  {activeGroupNames.length === 0 ? '—' : activeGroupNames.map((name, i) => (
+                    <span key={i} style={{ display: 'inline-block', marginRight: 3, marginBottom: 1, padding: '0 5px', borderRadius: 10, fontSize: 10, fontWeight: 600, backgroundColor: '#dbeafe', color: '#1d4ed8', whiteSpace: 'nowrap' }}>
+                      {name}
+                    </span>
+                  ))}
                 </td>
                 {/* Month cells */}
                 {months.map(month => {

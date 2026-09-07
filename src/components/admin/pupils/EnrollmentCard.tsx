@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { Enrollment, Group, PaymentClassification, Payment, LedgerMonth } from '@/types'
+import type { Enrollment, Group, PaymentClassification, Payment } from '@/types'
 import { computeLedger, effectiveFee } from '@/lib/ledger'
 import { useLanguage } from '@/lib/i18n/context'
 import { translations } from '@/lib/i18n/translations'
@@ -12,8 +12,10 @@ interface EnrollmentCardProps {
   groups: Group[]
   classifications: PaymentClassification[]
   payments: Payment[]
-  onCellClick?: (month: string, lm: LedgerMonth) => void
+  onCellClick?: (month: string) => void
   onClassificationChange?: (classificationId: string | null) => void
+  onEndEnrollment?: (endDate: string) => void
+  onRenew?: () => void
 }
 
 const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
@@ -45,12 +47,15 @@ function formatMonth(month: string, lang: string): string {
 }
 
 export default function EnrollmentCard({
-  enrollment, groups, classifications, payments, onCellClick, onClassificationChange,
+  enrollment, groups, classifications, payments, onCellClick, onClassificationChange, onEndEnrollment, onRenew,
 }: EnrollmentCardProps) {
   const { t, lang } = useLanguage()
   const { ledgerComments, setLedgerComment, dueOverrides } = useAppState()
   const [ledgerOpen, setLedgerOpen] = useState(true)
   const [editingComment, setEditingComment] = useState<string | null>(null)
+  const [showEndForm, setShowEndForm] = useState(false)
+  const today = new Date().toISOString().slice(0, 10)
+  const [endDateInput, setEndDateInput] = useState(today)
 
   // Merge DB comments (from enrollment prop) with any unsaved context comments
   const comments = { ...(enrollment.ledgerComments ?? {}), ...(ledgerComments[enrollment.id] ?? {}) }
@@ -98,15 +103,59 @@ export default function EnrollmentCard({
             {enrollment.endDate && ` — ${enrollment.endDate}`}
           </span>
         </div>
-        <span style={{
-          fontSize: 11, padding: '2px 8px', borderRadius: 10, fontWeight: 600,
-          backgroundColor: enrollment.billingActive ? '#dcfce7' : '#f3f4f6',
-          color: enrollment.billingActive ? '#166534' : '#6b7280',
-          whiteSpace: 'nowrap', flexShrink: 0,
-        }}>
-          {enrollment.billingActive ? t('pupil_detail.billing_active') : t('pupil_detail.billing_inactive')}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          <span style={{
+            fontSize: 11, padding: '2px 8px', borderRadius: 10, fontWeight: 600,
+            backgroundColor: enrollment.billingActive ? '#dcfce7' : '#f3f4f6',
+            color: enrollment.billingActive ? '#166534' : '#6b7280',
+            whiteSpace: 'nowrap',
+          }}>
+            {enrollment.billingActive ? t('pupil_detail.billing_active') : t('pupil_detail.billing_inactive')}
+          </span>
+          {onEndEnrollment && !enrollment.endDate && (
+            <button
+              onClick={() => setShowEndForm(v => !v)}
+              title={t('pupils.end_enrollment')}
+              style={{ background: 'none', border: '1px solid #fca5a5', borderRadius: 4, cursor: 'pointer', padding: '2px 8px', fontSize: 11, color: '#dc2626', fontWeight: 600 }}
+            >
+              {t('pupils.end_enrollment')}
+            </button>
+          )}
+          {onRenew && enrollment.endDate && (
+            <button
+              onClick={onRenew}
+              style={{ background: 'none', border: '1px solid #86efac', borderRadius: 4, cursor: 'pointer', padding: '2px 8px', fontSize: 11, color: '#166534', fontWeight: 600 }}
+            >
+              {t('pupils.renew_enrollment')}
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* End enrollment inline form */}
+      {showEndForm && (
+        <div style={{ padding: '8px 12px', backgroundColor: '#fff7f7', borderBottom: '1px solid #fecaca', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 11, color: '#dc2626', fontWeight: 600 }}>{t('pupils.end_date')}:</span>
+          <input
+            type="date"
+            value={endDateInput}
+            onChange={e => setEndDateInput(e.target.value)}
+            style={{ fontSize: 11, padding: '2px 6px', border: '1px solid #fca5a5', borderRadius: 4, outline: 'none' }}
+          />
+          <button
+            onClick={() => { onEndEnrollment(endDateInput); setShowEndForm(false) }}
+            style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 4, border: 'none', backgroundColor: '#dc2626', color: '#fff', cursor: 'pointer' }}
+          >
+            {t('common.save')}
+          </button>
+          <button
+            onClick={() => setShowEndForm(false)}
+            style={{ fontSize: 11, padding: '3px 10px', borderRadius: 4, border: '1px solid #d0d7de', backgroundColor: '#fff', color: '#374151', cursor: 'pointer' }}
+          >
+            {t('common.cancel')}
+          </button>
+        </div>
+      )}
 
       <div style={{ padding: '12px 12px 10px' }}>
 
@@ -207,7 +256,7 @@ export default function EnrollmentCard({
                   return (
                     <tr
                       key={lm.month}
-                      onClick={onCellClick ? () => onCellClick(lm.month, lm) : undefined}
+                      onClick={onCellClick ? () => onCellClick(lm.month) : undefined}
                       style={{ cursor: onCellClick ? 'pointer' : 'default' }}
                       title={onCellClick ? t('pupil_detail.override') : undefined}
                     >
