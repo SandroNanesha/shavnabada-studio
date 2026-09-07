@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Location {
+  id     String  @id @default(cuid())
+  name   String
+  groups Group[]
+}
+
+model Group {
+  id         String   @id @default(cuid())
+  name       String
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id])
+
+  enrollments Enrollment[]
+  teachers    TeacherGroup[]
+}
+
+model Teacher {
+  id      String      @id @default(cuid())
+  name    String
+  contact String      @default("")
+  role    TeacherRole @default(Assistant)
+  groups  TeacherGroup[]
+}
+
+model TeacherGroup {
+  teacherId String
+  groupId   String
+  teacher   Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  group     Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([teacherId, groupId])
+}
+
+model Tag {
+  id    String     @id @default(cuid())
+  label String
+  pupils PupilTag[]
+}
+
+model PaymentClassification {
+  id    String                    @id @default(cuid())
+  name  String
+  type  PaymentClassificationType
+  value Float
+
+  enrollments Enrollment[]
+}
+
+model Pupil {
+  id        String        @id @default(cuid())
+  firstName String
+  surname   String
+  idNumber  String        @unique
+  birthDate String        @default("")
+  category  PupilCategory @default(standard)
+  condition String        @default("")
+  archived  Boolean       @default(false)
+
+  parents     PupilParent[]
+  notes       PupilNote[]
+  tags        PupilTag[]
+  enrollments Enrollment[]
+  payments    Payment[]
+}
+
+model PupilParent {
+  id      String @id @default(cuid())
+  pupilId String
+  name    String
+  phone   String @default("")
+  order   Int    @default(0)
+  pupil   Pupil  @relation(fields: [pupilId], references: [id], onDelete: Cascade)
+}
+
+model PupilNote {
+  id      String @id @default(cuid())
+  pupilId String
+  date    String
+  text    String
+  pupil   Pupil  @relation(fields: [pupilId], references: [id], onDelete: Cascade)
+}
+
+model PupilTag {
+  pupilId String
+  tagId   String
+  pupil   Pupil  @relation(fields: [pupilId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([pupilId, tagId])
+}
+
+model Enrollment {
+  id             String  @id @default(cuid())
+  pupilId        String
+  groupId        String
+  startDate      String
+  endDate        String?
+  baseFee        Float
+  discount       Float   @default(0)
+  classificationId String?
+  customTerms    String  @default("")
+  billingActive  Boolean @default(true)
+  prorateFirstMonth Boolean @default(false)
+
+  // Per-month overrides stored as JSON objects (YYYY-MM -> value)
+  monthOverrides           Json @default("{}")
+  monthPaidAmountOverrides Json @default("{}")
+  monthDueOverrides        Json @default("{}")
+  ledgerComments           Json @default("{}")
+
+  // History stored as JSON arrays
+  groupHistory           Json @default("[]")
+  classificationHistory  Json @default("[]")
+
+  pupil          Pupil                  @relation(fields: [pupilId], references: [id], onDelete: Cascade)
+  group          Group                  @relation(fields: [groupId], references: [id])
+  classification PaymentClassification? @relation(fields: [classificationId], references: [id])
+  payments       Payment[]
+}
+
+model Payment {
+  id           String @id @default(cuid())
+  pupilId      String
+  enrollmentId String
+  amount       Float
+  date         String
+
+  pupil      Pupil      @relation(fields: [pupilId], references: [id], onDelete: Cascade)
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+}
+
+model Application {
+  id              String            @id @default(cuid())
+  pupilFirstName  String
+  pupilSurname    String
+  birthDate       String
+  documentFilename String?
+  status          ApplicationStatus @default(pending)
+  submittedAt     String
+
+  parents      ApplicationParent[]
+  customValues ApplicationCustomValue[]
+}
+
+model ApplicationParent {
+  id            String      @id @default(cuid())
+  applicationId String
+  name          String
+  phone         String      @default("")
+  order         Int         @default(0)
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model ApplicationCustomValue {
+  id            String      @id @default(cuid())
+  applicationId String
+  label         String
+  value         String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+enum TeacherRole {
+  Principal
+  Assistant
+}
+
+enum PupilCategory {
+  standard
+  staff
+  social
+  flagged
+}
+
+enum PaymentClassificationType {
+  standard
+  percent
+  amount
+  fixed
+}
+
+enum ApplicationStatus {
+  pending
+  approved
+  dismissed
+}
