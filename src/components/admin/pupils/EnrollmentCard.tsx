@@ -143,7 +143,7 @@ export default function EnrollmentCard({
             style={{ fontSize: 11, padding: '2px 6px', border: '1px solid #fca5a5', borderRadius: 4, outline: 'none' }}
           />
           <button
-            onClick={() => { onEndEnrollment(endDateInput); setShowEndForm(false) }}
+            onClick={() => { onEndEnrollment!(endDateInput); setShowEndForm(false) }}
             style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 4, border: 'none', backgroundColor: '#dc2626', color: '#fff', cursor: 'pointer' }}
           >
             {t('common.save')}
