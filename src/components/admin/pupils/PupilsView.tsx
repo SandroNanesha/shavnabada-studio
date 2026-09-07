@@ -70,7 +70,12 @@ export default function PupilsView({ pupils, initialNextCursor, groups, classifi
   const months = useMemo(() => generateMonths(fromMonth, toMonth), [fromMonth, toMonth])
 
   const allPupils = useMemo(() => {
-    const base = [...addedPupils, ...pupils, ...extraPupils]
+    const seen = new Set<string>()
+    const base = [...addedPupils, ...pupils, ...extraPupils].filter(p => {
+      if (seen.has(p.id)) return false
+      seen.add(p.id)
+      return true
+    })
     if (Object.keys(pupilEdits).length === 0) return base
     return base.map(p => p.id in pupilEdits ? { ...p, ...pupilEdits[p.id] } : p)
   }, [addedPupils, pupils, extraPupils, pupilEdits])
