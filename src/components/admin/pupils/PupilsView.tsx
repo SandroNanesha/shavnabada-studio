@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import type { Pupil, Group, PaymentClassification, Payment, MonthOverrideStatus } from '@/types'
 import { computeLedger, combinedMonthStatus, generateMonths, deriveStatus, effectiveFee } from '@/lib/ledger'
 import { useAppState } from '@/lib/state/context'
@@ -12,6 +13,7 @@ import AddPupilModal from './AddPupilModal'
 
 interface PupilsViewProps {
   pupils: Pupil[]
+  initialNextCursor: string | null
   groups: Group[]
   classifications: PaymentClassification[]
   payments: Payment[]
@@ -25,8 +27,9 @@ interface ModalState {
 // enrollmentId -> YYYY-MM -> status
 type OverrideMap = Record<string, Record<string, MonthOverrideStatus>>
 
-export default function PupilsView({ pupils, groups, classifications, payments }: PupilsViewProps) {
+export default function PupilsView({ pupils, initialNextCursor, groups, classifications, payments }: PupilsViewProps) {
   const { t } = useLanguage()
+  const router = useRouter()
   const {
     pupilFilters, setPupilFilters,
     monthOverrides: overrides, paidAmountOverrides, dueOverrides,
@@ -36,6 +39,22 @@ export default function PupilsView({ pupils, groups, classifications, payments }
   } = useAppState()
 
   const [showAddModal, setShowAddModal] = useState(false)
+  const [extraPupils, setExtraPupils] = useState<Pupil[]>([])
+  const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor)
+  const [loadingMore, setLoadingMore] = useState(false)
+
+  const loadMore = async () => {
+    if (!nextCursor || loadingMore) return
+    setLoadingMore(true)
+    try {
+      const res = await fetch(`/api/pupils?cursor=${nextCursor}`)
+      const data = await res.json() as { pupils: Pupil[]; nextCursor: string | null }
+      setExtraPupils(prev => [...prev, ...data.pupils])
+      setNextCursor(data.nextCursor)
+    } finally {
+      setLoadingMore(false)
+    }
+  }
 
   const { search, groupFilter, viewMode, fromMonth, toMonth, statusFilters: statusFiltersArr } = pupilFilters
   const statusFilters = new Set(statusFiltersArr)
@@ -51,10 +70,10 @@ export default function PupilsView({ pupils, groups, classifications, payments }
   const months = useMemo(() => generateMonths(fromMonth, toMonth), [fromMonth, toMonth])
 
   const allPupils = useMemo(() => {
-    const base = [...addedPupils, ...pupils]
+    const base = [...addedPupils, ...pupils, ...extraPupils]
     if (Object.keys(pupilEdits).length === 0) return base
     return base.map(p => p.id in pupilEdits ? { ...p, ...pupilEdits[p.id] } : p)
-  }, [addedPupils, pupils, pupilEdits])
+  }, [addedPupils, pupils, extraPupils, pupilEdits])
 
   const pupilsWithOverrides = useMemo(() => {
     if (Object.keys(overrides).length === 0 && Object.keys(paidAmountOverrides).length === 0 && Object.keys(dueOverrides).length === 0) return allPupils
@@ -73,7 +92,7 @@ export default function PupilsView({ pupils, groups, classifications, payments }
           : e.monthDueOverrides,
       })),
     }))
-  }, [pupils, overrides, paidAmountOverrides])
+  }, [allPupils, overrides, paidAmountOverrides, dueOverrides])
 
   const filteredPupils = useMemo(() => {
     let result = pupilsWithOverrides.filter(p => {
@@ -138,7 +157,7 @@ export default function PupilsView({ pupils, groups, classifications, payments }
           ledgerMonth: lm,
           computedStatus: deriveStatus(lm.due, lm.paid),
           standardFee: effectiveFee(e, classifications),
-          currentDueOverride: dueOverrides[e.id]?.[month],
+          currentDueOverride: dueOverrides[e.id]?.[month] ?? e.monthDueOverrides?.[month],
           currentPaidOverride: paidAmountOverrides[e.id]?.[month],
         }]
       })
@@ -226,13 +245,24 @@ export default function PupilsView({ pupils, groups, classifications, payments }
           onGroupFilterChange={setGroupFilter}
           onCellClick={handleCellClick}
         />
+        {nextCursor && (
+          <div style={{ padding: '12px 16px', borderTop: '1px solid #e5e7eb' }}>
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              style={{ fontSize: 12, color: '#1d4ed8', background: 'none', border: '1px solid #bfdbfe', borderRadius: 4, padding: '5px 14px', cursor: loadingMore ? 'not-allowed' : 'pointer', opacity: loadingMore ? 0.6 : 1 }}
+            >
+              {loadingMore ? t('common.loading') : t('pupils.load_more')}
+            </button>
+          </div>
+        )}
       </div>
 
       {showAddModal && (
         <AddPupilModal
           groups={groups}
           classifications={classifications}
-          onSave={p => { addPupil(p); setShowAddModal(false) }}
+          onSave={p => { addPupil(p); setShowAddModal(false); router.refresh() }}
           onClose={() => setShowAddModal(false)}
         />
       )}

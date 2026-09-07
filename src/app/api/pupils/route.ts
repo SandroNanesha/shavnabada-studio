@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { getPupils } from '@/lib/data'
+
+// GET /api/pupils?cursor=<id>
+export async function GET(req: NextRequest) {
+  const cursor = req.nextUrl.searchParams.get('cursor') ?? undefined
+  const result = await getPupils(cursor)
+  return NextResponse.json(result)
+}
 
 // POST /api/pupils
 // Body: {

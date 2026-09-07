@@ -57,18 +57,17 @@ function toEnrollment(e: {
 
 // ---- query functions ----
 
-export async function getPupils(): Promise<Pupil[]> {
-  const rows = await prisma.pupil.findMany({
-    include: {
-      parents: { orderBy: { order: 'asc' } },
-      notes: { orderBy: { date: 'asc' } },
-      tags: true,
-      enrollments: true,
-    },
-    orderBy: { surname: 'asc' },
-  })
+const PUPILS_PAGE_SIZE = 100
 
-  return rows.map(row => ({
+function mapPupilRow(row: {
+  id: string; firstName: string; surname: string; idNumber: string; birthDate: string
+  category: string; condition: string; archived: boolean
+  tags: { tagId: string }[]
+  parents: { name: string; phone: string }[]
+  notes: { id: string; date: string; text: string }[]
+  enrollments: Parameters<typeof toEnrollment>[0][]
+}): Pupil {
+  return {
     id: row.id,
     firstName: row.firstName,
     surname: row.surname,
@@ -81,7 +80,30 @@ export async function getPupils(): Promise<Pupil[]> {
     parents: row.parents.map(p => ({ name: p.name, phone: p.phone })) as PupilParent[],
     notes: row.notes.map(n => ({ id: n.id, date: n.date, text: n.text })) as PupilNote[],
     enrollments: row.enrollments.map(toEnrollment),
-  }))
+  }
+}
+
+const PUPIL_INCLUDE = {
+  parents: { orderBy: { order: 'asc' } },
+  notes: { orderBy: { date: 'asc' } },
+  tags: true,
+  enrollments: true,
+} as const
+
+export async function getPupils(cursor?: string): Promise<{ pupils: Pupil[]; nextCursor: string | null }> {
+  const rows = await prisma.pupil.findMany({
+    take: PUPILS_PAGE_SIZE + 1,
+    ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+    include: PUPIL_INCLUDE,
+    orderBy: [{ surname: 'asc' }, { id: 'asc' }],
+  })
+
+  const hasMore = rows.length > PUPILS_PAGE_SIZE
+  const page = hasMore ? rows.slice(0, PUPILS_PAGE_SIZE) : rows
+  return {
+    pupils: page.map(mapPupilRow),
+    nextCursor: hasMore ? page[page.length - 1].id : null,
+  }
 }
 
 export async function getPupil(id: string): Promise<Pupil | null> {

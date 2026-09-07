@@ -64,7 +64,7 @@ export default function PupilDetail({ pupil, groups, classifications, payments }
       ledgerMonth: lm,
       computedStatus: deriveStatus(lm.due, lm.paid),
       standardFee: stdFee,
-      currentDueOverride: dueOverrides[enrollmentId]?.[modalState.month],
+      currentDueOverride: dueOverrides[enrollmentId]?.[modalState.month] ?? enrollment.monthDueOverrides?.[modalState.month],
       currentPaidOverride: paidAmountOverrides[enrollmentId]?.[modalState.month],
     }]
   }, [modalState, enrollmentsWithOverrides, groups, classifications, dueOverrides])
