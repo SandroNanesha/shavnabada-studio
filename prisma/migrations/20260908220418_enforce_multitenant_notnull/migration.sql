@@ -1,3 +1,19 @@
+-- Ensure default studio exists before backfilling nulls
+INSERT INTO "Studio" (id, name, slug, enabled, "createdAt")
+VALUES ('default-studio', 'Shavnabada Studio', 'shavnabada', true, NOW())
+ON CONFLICT (id) DO NOTHING;
+
+-- Backfill all null studioId values to the default studio
+UPDATE "Location"             SET "studioId" = 'default-studio' WHERE "studioId" IS NULL;
+UPDATE "Group"                SET "studioId" = 'default-studio' WHERE "studioId" IS NULL;
+UPDATE "Teacher"              SET "studioId" = 'default-studio' WHERE "studioId" IS NULL;
+UPDATE "Tag"                  SET "studioId" = 'default-studio' WHERE "studioId" IS NULL;
+UPDATE "PaymentClassification" SET "studioId" = 'default-studio' WHERE "studioId" IS NULL;
+UPDATE "Pupil"                SET "studioId" = 'default-studio' WHERE "studioId" IS NULL;
+UPDATE "ApplicationForm"      SET "studioId" = 'default-studio' WHERE "studioId" IS NULL;
+UPDATE "Application"          SET "studioId" = 'default-studio' WHERE "studioId" IS NULL;
+UPDATE "Settings"             SET "studioId" = 'default-studio' WHERE "studioId" IS NULL;
+
 -- DropForeignKey
 ALTER TABLE "Application" DROP CONSTRAINT "Application_studioId_fkey";
 
