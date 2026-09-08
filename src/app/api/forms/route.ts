@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { auth } from '@/auth'
 import type { ApplicationFormField } from '@/types'
 
 export async function GET() {
+  const session = await auth()
+  const studioId = (session?.user as { studioId?: string })?.studioId
+  if (!studioId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
-    const rows = await prisma.applicationForm.findMany({ orderBy: { createdAt: 'desc' } })
+    const rows = await prisma.applicationForm.findMany({ where: { studioId }, orderBy: { createdAt: 'desc' } })
     const forms = rows.map(r => ({
       id: r.id,
       title: r.title,
@@ -20,6 +25,10 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await auth()
+  const studioId = (session?.user as { studioId?: string })?.studioId
+  if (!studioId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const body = await req.json() as { title: string; fields: ApplicationFormField[] }
     const { title, fields } = body
@@ -39,6 +48,7 @@ export async function POST(req: NextRequest) {
         slug,
         fields: (fields ?? []) as object[],
         active: true,
+        studioId,
       },
     })
 

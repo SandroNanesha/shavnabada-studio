@@ -93,10 +93,11 @@ const PUPIL_INCLUDE = {
   enrollments: true,
 } as const
 
-export async function getPupils(cursor?: string): Promise<{ pupils: Pupil[]; nextCursor: string | null }> {
+export async function getPupils(studioId: string, cursor?: string): Promise<{ pupils: Pupil[]; nextCursor: string | null }> {
   const rows = await prisma.pupil.findMany({
     take: PUPILS_PAGE_SIZE + 1,
     ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+    where: { studioId },
     include: PUPIL_INCLUDE,
     orderBy: [{ surname: 'asc' }, { id: 'asc' }],
   })
@@ -109,9 +110,9 @@ export async function getPupils(cursor?: string): Promise<{ pupils: Pupil[]; nex
   }
 }
 
-export async function getPupil(id: string): Promise<Pupil | null> {
+export async function getPupil(studioId: string, id: string): Promise<Pupil | null> {
   const row = await prisma.pupil.findUnique({
-    where: { id },
+    where: { id, studioId },
     include: {
       parents: { orderBy: { order: 'asc' } },
       notes: { orderBy: { date: 'asc' } },
@@ -139,18 +140,19 @@ export async function getPupil(id: string): Promise<Pupil | null> {
   }
 }
 
-export async function getGroups(): Promise<Group[]> {
-  const rows = await prisma.group.findMany({ orderBy: { name: 'asc' } })
+export async function getGroups(studioId: string): Promise<Group[]> {
+  const rows = await prisma.group.findMany({ where: { studioId }, orderBy: { name: 'asc' } })
   return rows.map(r => ({ id: r.id, name: r.name, locationId: r.locationId }))
 }
 
-export async function getLocations(): Promise<Location[]> {
-  const rows = await prisma.location.findMany({ orderBy: { name: 'asc' } })
+export async function getLocations(studioId: string): Promise<Location[]> {
+  const rows = await prisma.location.findMany({ where: { studioId }, orderBy: { name: 'asc' } })
   return rows.map(r => ({ id: r.id, name: r.name }))
 }
 
-export async function getTeachers(): Promise<Teacher[]> {
+export async function getTeachers(studioId: string): Promise<Teacher[]> {
   const rows = await prisma.teacher.findMany({
+    where: { studioId },
     include: { groups: true },
     orderBy: { name: 'asc' },
   })
@@ -163,8 +165,8 @@ export async function getTeachers(): Promise<Teacher[]> {
   }))
 }
 
-export async function getClassifications(): Promise<PaymentClassification[]> {
-  const rows = await prisma.paymentClassification.findMany({ orderBy: { name: 'asc' } })
+export async function getClassifications(studioId: string): Promise<PaymentClassification[]> {
+  const rows = await prisma.paymentClassification.findMany({ where: { studioId }, orderBy: { name: 'asc' } })
   return rows.map(r => ({
     id: r.id,
     name: r.name,
@@ -173,8 +175,11 @@ export async function getClassifications(): Promise<PaymentClassification[]> {
   }))
 }
 
-export async function getPayments(): Promise<Payment[]> {
-  const rows = await prisma.payment.findMany({ orderBy: { date: 'asc' } })
+export async function getPayments(studioId: string): Promise<Payment[]> {
+  const rows = await prisma.payment.findMany({
+    where: { pupil: { studioId } },
+    orderBy: { date: 'asc' },
+  })
   return rows.map(r => ({
     id: r.id,
     pupilId: r.pupilId,
@@ -184,8 +189,9 @@ export async function getPayments(): Promise<Payment[]> {
   }))
 }
 
-export async function getApplications(): Promise<Application[]> {
+export async function getApplications(studioId: string): Promise<Application[]> {
   const rows = await prisma.application.findMany({
+    where: { studioId },
     include: {
       parents: { orderBy: { order: 'asc' } },
       customValues: true,
@@ -207,8 +213,8 @@ export async function getApplications(): Promise<Application[]> {
   }))
 }
 
-export async function getForms(): Promise<ApplicationForm[]> {
-  const rows = await prisma.applicationForm.findMany({ orderBy: { createdAt: 'desc' } })
+export async function getForms(studioId: string): Promise<ApplicationForm[]> {
+  const rows = await prisma.applicationForm.findMany({ where: { studioId }, orderBy: { createdAt: 'desc' } })
   return rows.map(r => ({
     id: r.id,
     title: r.title,
@@ -219,7 +225,7 @@ export async function getForms(): Promise<ApplicationForm[]> {
   }))
 }
 
-export async function getTags() {
-  const rows = await prisma.tag.findMany({ orderBy: { label: 'asc' } })
+export async function getTags(studioId: string) {
+  const rows = await prisma.tag.findMany({ where: { studioId }, orderBy: { label: 'asc' } })
   return rows.map(r => ({ id: r.id, label: r.label }))
 }

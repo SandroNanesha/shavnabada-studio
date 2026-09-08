@@ -6,10 +6,41 @@ datasource db {
   provider = "postgresql"
 }
 
+model Studio {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  users            User[]
+  locations        Location[]
+  groups           Group[]
+  teachers         Teacher[]
+  tags             Tag[]
+  classifications  PaymentClassification[]
+  pupils           Pupil[]
+  applicationForms ApplicationForm[]
+  applications     Application[]
+  settings         Settings?
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(studio_admin)
+  studioId     String?
+  studio       Studio?  @relation(fields: [studioId], references: [id])
+  createdAt    DateTime @default(now())
+}
+
 model Location {
-  id     String  @id @default(cuid())
-  name   String
-  groups Group[]
+  id       String   @id @default(cuid())
+  name     String
+  studioId String
+  studio   Studio   @relation(fields: [studioId], references: [id])
+  groups   Group[]
 }
 
 model Group {
@@ -17,17 +48,21 @@ model Group {
   name       String
   locationId String
   location   Location @relation(fields: [locationId], references: [id])
+  studioId   String
+  studio     Studio   @relation(fields: [studioId], references: [id])
 
   enrollments Enrollment[]
   teachers    TeacherGroup[]
 }
 
 model Teacher {
-  id      String      @id @default(cuid())
-  name    String
-  contact String      @default("")
-  role    TeacherRole @default(Assistant)
-  groups  TeacherGroup[]
+  id       String         @id @default(cuid())
+  name     String
+  contact  String         @default("")
+  role     TeacherRole    @default(Assistant)
+  studioId String
+  studio   Studio         @relation(fields: [studioId], references: [id])
+  groups   TeacherGroup[]
 }
 
 model TeacherGroup {
@@ -40,16 +75,20 @@ model TeacherGroup {
 }
 
 model Tag {
-  id    String     @id @default(cuid())
-  label String
-  pupils PupilTag[]
+  id       String     @id @default(cuid())
+  label    String
+  studioId String
+  studio   Studio     @relation(fields: [studioId], references: [id])
+  pupils   PupilTag[]
 }
 
 model PaymentClassification {
-  id    String                    @id @default(cuid())
-  name  String
-  type  PaymentClassificationType
-  value Float
+  id       String                    @id @default(cuid())
+  name     String
+  type     PaymentClassificationType
+  value    Float
+  studioId String
+  studio   Studio                    @relation(fields: [studioId], references: [id])
 
   enrollments Enrollment[]
 }
@@ -58,18 +97,22 @@ model Pupil {
   id        String        @id @default(cuid())
   firstName String
   surname   String
-  idNumber  String        @unique
+  idNumber  String
   birthDate String        @default("")
   category  PupilCategory @default(standard)
   condition String        @default("")
   archived  Boolean       @default(false)
   source    PupilSource   @default(manual)
+  studioId  String
+  studio    Studio        @relation(fields: [studioId], references: [id])
 
   parents     PupilParent[]
   notes       PupilNote[]
   tags        PupilTag[]
   enrollments Enrollment[]
   payments    Payment[]
+
+  @@unique([studioId, idNumber])
 }
 
 model PupilParent {
@@ -145,21 +188,25 @@ model ApplicationForm {
   fields    Json     @default("[]")
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
+  studioId  String
+  studio    Studio   @relation(fields: [studioId], references: [id])
 
   applications Application[]
 }
 
 model Application {
-  id              String            @id @default(cuid())
-  pupilFirstName  String
-  pupilSurname    String
-  birthDate       String
-  idNumber        String            @default("")
+  id               String            @id @default(cuid())
+  pupilFirstName   String
+  pupilSurname     String
+  birthDate        String
+  idNumber         String            @default("")
   documentFilename String?
-  status          ApplicationStatus @default(pending)
-  submittedAt     String
-  formId          String?
-  form            ApplicationForm?  @relation(fields: [formId], references: [id])
+  status           ApplicationStatus @default(pending)
+  submittedAt      String
+  formId           String?
+  form             ApplicationForm?  @relation(fields: [formId], references: [id])
+  studioId         String
+  studio           Studio            @relation(fields: [studioId], references: [id])
 
   parents      ApplicationParent[]
   customValues ApplicationCustomValue[]
@@ -183,12 +230,14 @@ model ApplicationCustomValue {
 }
 
 model Settings {
-  id             String @id @default("singleton")
-  studioName     String @default("Shavnabada Studio")
-  futureMonths   Int    @default(2)
-  paymentDueDay  Int    @default(1)
-  platformLogo   String @default("")
-  formLogo       String @default("")
+  id            String  @id @default("singleton")
+  studioName    String  @default("Shavnabada Studio")
+  futureMonths  Int     @default(2)
+  paymentDueDay Int     @default(1)
+  platformLogo  String  @default("")
+  formLogo      String  @default("")
+  studioId      String  @unique
+  studio        Studio  @relation(fields: [studioId], references: [id])
 }
 
 enum TeacherRole {
@@ -219,4 +268,9 @@ enum ApplicationStatus {
 enum PupilSource {
   manual
   application
+}
+
+enum UserRole {
+  super_admin
+  studio_admin
 }

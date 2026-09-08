@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-
-async function getOrCreate() {
-  let s = await prisma.settings.findUnique({ where: { id: 'singleton' } })
-  if (!s) s = await prisma.settings.create({ data: { id: 'singleton' } })
-  return s
-}
+import { auth } from '@/auth'
 
 function toResponse(s: { studioName: string; futureMonths: number; paymentDueDay: number; platformLogo: string; formLogo: string }) {
   return { studioName: s.studioName, futureMonths: s.futureMonths, paymentDueDay: s.paymentDueDay, platformLogo: s.platformLogo, formLogo: s.formLogo }
 }
 
 export async function GET() {
+  const session = await auth()
+  const studioId = (session?.user as { studioId?: string })?.studioId
+  if (!studioId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
-    const s = await getOrCreate()
+    let s = await prisma.settings.findUnique({ where: { studioId } })
+    if (!s) s = await prisma.settings.create({ data: { studioId } })
     return NextResponse.json(toResponse(s))
   } catch (err) {
     console.error('[settings GET]', err)
@@ -22,12 +22,17 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
+  const session = await auth()
+  const studioId = (session?.user as { studioId?: string })?.studioId
+  if (!studioId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const body = await req.json() as { studioName?: string; futureMonths?: number; paymentDueDay?: number; platformLogo?: string; formLogo?: string }
-    await getOrCreate()
-    const updated = await prisma.settings.update({
-      where: { id: 'singleton' },
-      data: {
+
+    const updated = await prisma.settings.upsert({
+      where: { studioId },
+      create: { studioId },
+      update: {
         ...(body.studioName !== undefined ? { studioName: body.studioName } : {}),
         ...(body.futureMonths !== undefined ? { futureMonths: body.futureMonths } : {}),
         ...(body.paymentDueDay !== undefined ? { paymentDueDay: body.paymentDueDay } : {}),

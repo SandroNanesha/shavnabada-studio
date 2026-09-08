@@ -57,6 +57,7 @@ export async function POST(
         status: 'pending',
         submittedAt: new Date().toISOString(),
         formId: form.id,
+        studioId: form.studioId,
         parents: {
           create: (parents ?? []).map((p, i) => ({
             name: p.name,

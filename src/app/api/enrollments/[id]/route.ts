@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { auth } from '@/auth'
 
 // PATCH /api/enrollments/[id]
 // Body: { endDate?, billingActive?, resumeDate?, classificationId?, firstMonthDueOverride? }
@@ -8,6 +9,10 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const session = await auth()
+  const studioId = (session?.user as { studioId?: string })?.studioId
+  if (!studioId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { id } = await params
   const body = await req.json() as {
     endDate?: string | null
@@ -23,8 +28,8 @@ export async function PATCH(
 
   if ('endDate' in body && body.endDate === null && body.resumeDate) {
     // Reactivation
-    const existing = await prisma.enrollment.findUnique({ where: { id } })
-    if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    const existing = await prisma.enrollment.findUnique({ where: { id }, include: { pupil: true } })
+    if (!existing || existing.pupil.studioId !== studioId) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     data.endDate = null
 
@@ -54,7 +59,14 @@ export async function PATCH(
     data.monthOverrides = overrides
     data.monthDueOverrides = dueOverrides
   } else if ('endDate' in body) {
+    // Verify ownership for simple endDate updates
+    const existing = await prisma.enrollment.findUnique({ where: { id }, include: { pupil: true } })
+    if (!existing || existing.pupil.studioId !== studioId) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     data.endDate = body.endDate ?? null
+  } else {
+    // Verify ownership for other updates (billingActive, classificationId)
+    const existing = await prisma.enrollment.findUnique({ where: { id }, include: { pupil: true } })
+    if (!existing || existing.pupil.studioId !== studioId) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
   if (Object.keys(data).length === 0) {

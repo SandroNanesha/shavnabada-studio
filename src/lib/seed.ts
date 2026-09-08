@@ -18,12 +18,14 @@ const prisma = new PrismaClient({ adapter })
 async function main() {
   console.log('Seeding database...')
 
+  const DEFAULT_STUDIO_ID = 'default-studio'
+
   // 1. Locations
   for (const loc of locations) {
     await prisma.location.upsert({
       where: { id: loc.id },
       update: { name: loc.name },
-      create: { id: loc.id, name: loc.name },
+      create: { id: loc.id, name: loc.name, studioId: DEFAULT_STUDIO_ID },
     })
   }
   console.log(`Upserted ${locations.length} locations`)
@@ -33,7 +35,7 @@ async function main() {
     await prisma.group.upsert({
       where: { id: grp.id },
       update: { name: grp.name, locationId: grp.locationId },
-      create: { id: grp.id, name: grp.name, locationId: grp.locationId },
+      create: { id: grp.id, name: grp.name, locationId: grp.locationId, studioId: DEFAULT_STUDIO_ID },
     })
   }
   console.log(`Upserted ${groups.length} groups`)
@@ -43,7 +45,7 @@ async function main() {
     await prisma.tag.upsert({
       where: { id: tag.id },
       update: { label: tag.label },
-      create: { id: tag.id, label: tag.label },
+      create: { id: tag.id, label: tag.label, studioId: DEFAULT_STUDIO_ID },
     })
   }
   console.log(`Upserted ${tags.length} tags`)
@@ -53,7 +55,7 @@ async function main() {
     await prisma.paymentClassification.upsert({
       where: { id: cls.id },
       update: { name: cls.name, type: cls.type, value: cls.value },
-      create: { id: cls.id, name: cls.name, type: cls.type, value: cls.value },
+      create: { id: cls.id, name: cls.name, type: cls.type, value: cls.value, studioId: DEFAULT_STUDIO_ID },
     })
   }
   console.log(`Upserted ${classifications.length} classifications`)
@@ -63,7 +65,7 @@ async function main() {
     await prisma.teacher.upsert({
       where: { id: tch.id },
       update: { name: tch.name, contact: tch.contact, role: tch.role },
-      create: { id: tch.id, name: tch.name, contact: tch.contact, role: tch.role },
+      create: { id: tch.id, name: tch.name, contact: tch.contact, role: tch.role, studioId: DEFAULT_STUDIO_ID },
     })
     // TeacherGroup join records
     // Delete existing and re-insert to handle changes
@@ -96,6 +98,7 @@ async function main() {
         category: pupil.category,
         condition: pupil.condition,
         archived: pupil.archived,
+        studioId: DEFAULT_STUDIO_ID,
       },
     })
 
@@ -200,6 +203,7 @@ async function main() {
         documentFilename: app.documentFilename ?? null,
         status: app.status,
         submittedAt: app.submittedAt,
+        studioId: DEFAULT_STUDIO_ID,
       },
     })
 

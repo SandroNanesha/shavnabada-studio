@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { auth } from '@/auth'
 
 // PATCH /api/enrollments/[id]/overrides
 // Body: {
@@ -13,6 +14,10 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const session = await auth()
+  const studioId = (session?.user as { studioId?: string })?.studioId
+  if (!studioId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { id } = await params
   const body = await req.json()
   const { month, status, customDue, customPaid, classificationId } = body as {
@@ -23,8 +28,8 @@ export async function PATCH(
     classificationId?: string | null
   }
 
-  const enrollment = await prisma.enrollment.findUnique({ where: { id } })
-  if (!enrollment) {
+  const enrollment = await prisma.enrollment.findUnique({ where: { id }, include: { pupil: true } })
+  if (!enrollment || enrollment.pupil.studioId !== studioId) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 

@@ -7,6 +7,7 @@ import { AppStateProvider } from '@/lib/state/context'
 import { useState, useEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import SidebarBrand from '@/components/admin/SidebarBrand'
+import { signOut } from 'next-auth/react'
 
 const navLinks = [
   { href: '/pupils', key: 'nav.pupils' },
@@ -100,6 +101,16 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             KA
           </button>
         </div>
+      </div>
+
+      {/* Sign out */}
+      <div className="px-4 pb-4">
+        <button
+          onClick={() => signOut({ redirectTo: '/login' })}
+          style={{ width: '100%', padding: '6px', fontSize: 11, borderRadius: 4, border: '1px solid #475569', backgroundColor: 'transparent', color: '#94a3b8', cursor: 'pointer' }}
+        >
+          Sign out
+        </button>
       </div>
     </>
   )

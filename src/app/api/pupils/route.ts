@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getPupils } from '@/lib/data'
+import { auth } from '@/auth'
 
 // GET /api/pupils?cursor=<id>
 export async function GET(req: NextRequest) {
+  const session = await auth()
+  const studioId = (session?.user as { studioId?: string })?.studioId
+  if (!studioId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const cursor = req.nextUrl.searchParams.get('cursor') ?? undefined
-  const result = await getPupils(cursor)
+  const result = await getPupils(studioId, cursor)
   return NextResponse.json(result)
 }
 
@@ -16,6 +21,10 @@ export async function GET(req: NextRequest) {
 //   enrollments?: { groupId, startDate, classificationId?, firstMonthDueOverride? }[]
 // }
 export async function POST(req: NextRequest) {
+  const session = await auth()
+  const studioId = (session?.user as { studioId?: string })?.studioId
+  if (!studioId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const body = await req.json()
   const { firstName, surname, idNumber, birthDate, parents, enrollments, source } = body as {
     firstName: string
@@ -31,7 +40,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'firstName, surname and idNumber are required' }, { status: 400 })
   }
 
-  const existing = await prisma.pupil.findUnique({ where: { idNumber: idNumber.trim() } })
+  const existing = await prisma.pupil.findUnique({ where: { studioId_idNumber: { studioId, idNumber: idNumber.trim() } } })
   if (existing) {
     return NextResponse.json({ error: 'A pupil with this ID number already exists' }, { status: 409 })
   }
@@ -45,6 +54,7 @@ export async function POST(req: NextRequest) {
       idNumber: idNumber.trim(),
       birthDate: birthDate ?? '',
       source: source ?? 'manual',
+      studioId,
       parents: {
         create: parents
           .filter(p => p.name.trim() || p.phone.trim())
