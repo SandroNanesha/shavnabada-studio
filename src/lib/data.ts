@@ -7,6 +7,8 @@ import type {
   PaymentClassification,
   Payment,
   Application,
+  ApplicationForm,
+  ApplicationFormField,
   Enrollment,
   PupilParent,
   PupilNote,
@@ -61,7 +63,7 @@ const PUPILS_PAGE_SIZE = 100
 
 function mapPupilRow(row: {
   id: string; firstName: string; surname: string; idNumber: string; birthDate: string
-  category: string; condition: string; archived: boolean
+  category: string; condition: string; archived: boolean; source: string
   tags: { tagId: string }[]
   parents: { name: string; phone: string }[]
   notes: { id: string; date: string; text: string }[]
@@ -76,6 +78,7 @@ function mapPupilRow(row: {
     category: row.category as Pupil['category'],
     condition: row.condition,
     archived: row.archived,
+    source: (row.source as Pupil['source']) ?? 'manual',
     tagIds: row.tags.map(t => t.tagId),
     parents: row.parents.map(p => ({ name: p.name, phone: p.phone })) as PupilParent[],
     notes: row.notes.map(n => ({ id: n.id, date: n.date, text: n.text })) as PupilNote[],
@@ -128,6 +131,7 @@ export async function getPupil(id: string): Promise<Pupil | null> {
     category: row.category as Pupil['category'],
     condition: row.condition,
     archived: row.archived,
+    source: (row.source as Pupil['source']) ?? 'manual',
     tagIds: row.tags.map(t => t.tagId),
     parents: row.parents.map(p => ({ name: p.name, phone: p.phone })) as PupilParent[],
     notes: row.notes.map(n => ({ id: n.id, date: n.date, text: n.text })) as PupilNote[],
@@ -193,11 +197,25 @@ export async function getApplications(): Promise<Application[]> {
     pupilFirstName: r.pupilFirstName,
     pupilSurname: r.pupilSurname,
     birthDate: r.birthDate,
+    idNumber: r.idNumber,
     documentFilename: r.documentFilename,
     status: r.status as Application['status'],
     submittedAt: r.submittedAt,
+    formId: r.formId,
     parents: r.parents.map(p => ({ name: p.name, phone: p.phone })),
     customValues: r.customValues.map(v => ({ label: v.label, value: v.value })),
+  }))
+}
+
+export async function getForms(): Promise<ApplicationForm[]> {
+  const rows = await prisma.applicationForm.findMany({ orderBy: { createdAt: 'desc' } })
+  return rows.map(r => ({
+    id: r.id,
+    title: r.title,
+    slug: r.slug,
+    fields: r.fields as unknown as ApplicationFormField[],
+    active: r.active,
+    createdAt: r.createdAt.toISOString(),
   }))
 }
 

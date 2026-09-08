@@ -24,9 +24,11 @@ export default function PupilDetail({ pupil, groups, classifications, payments }
   const {
     monthOverrides, paidAmountOverrides, dueOverrides, classificationOverrides,
     setMonthOverride, setPaidAmountOverride, setDueOverride, setClassificationOverride,
+    futureMonths,
   } = useAppState()
 
   const [modalMonth, setModalMonth] = useState<string | null>(null)
+  const [modalEnrollmentId, setModalEnrollmentId] = useState<string | null>(null)
   const [showAddEnrollment, setShowAddEnrollment] = useState(false)
   const [renewingEnrollmentId, setRenewingEnrollmentId] = useState<string | null>(null)
   const [endedOpen, setEndedOpen] = useState(false)
@@ -54,9 +56,9 @@ export default function PupilDetail({ pupil, groups, classifications, payments }
 
   // For a given month, collect ALL enrollments active that month
   const modalTargets = useMemo((): OverrideTarget[] => {
-    if (!modalMonth) return []
+    if (!modalMonth || !modalEnrollmentId) return []
     return enrollmentsWithOverrides
-      .filter(e => generateMonths(e.startDate, e.endDate).includes(modalMonth))
+      .filter(e => e.id === modalEnrollmentId && generateMonths(e.startDate, e.endDate, futureMonths).includes(modalMonth))
       .flatMap(e => {
         const lm = computeLedger(e, pupilPayments, classifications).find(l => l.month === modalMonth)
         if (!lm) return []
@@ -70,7 +72,7 @@ export default function PupilDetail({ pupil, groups, classifications, payments }
           currentPaidOverride: paidAmountOverrides[e.id]?.[modalMonth],
         }]
       })
-  }, [modalMonth, enrollmentsWithOverrides, pupilPayments, classifications, groups, dueOverrides, paidAmountOverrides])
+  }, [modalMonth, modalEnrollmentId, enrollmentsWithOverrides, pupilPayments, classifications, groups, dueOverrides, paidAmountOverrides])
 
   const handleSave = (changes: { enrollmentId: string; status: OverrideStatus; paidAmount?: number; customDue?: number | null; customPaid?: number | null }[]) => {
     if (!modalMonth) return
@@ -93,6 +95,7 @@ export default function PupilDetail({ pupil, groups, classifications, payments }
       })
     }
     setModalMonth(null)
+    setModalEnrollmentId(null)
   }
 
   const handleEndEnrollment = async (enrollmentId: string, endDate: string) => {
@@ -115,7 +118,7 @@ export default function PupilDetail({ pupil, groups, classifications, payments }
       groups={groups}
       classifications={classifications}
       payments={pupilPayments}
-      onCellClick={ended ? undefined : (month) => setModalMonth(month)}
+      onCellClick={ended ? undefined : (month, enrollmentId) => { setModalMonth(month); setModalEnrollmentId(enrollmentId) }}
       onClassificationChange={ended ? undefined : id => {
         setClassificationOverride(enrollment.id, id)
         fetch(`/api/enrollments/${enrollment.id}/overrides`, {
@@ -177,7 +180,7 @@ export default function PupilDetail({ pupil, groups, classifications, payments }
           month={modalMonth}
           targets={modalTargets}
           onSave={handleSave}
-          onClose={() => setModalMonth(null)}
+          onClose={() => { setModalMonth(null); setModalEnrollmentId(null) }}
         />
       )}
 

@@ -12,7 +12,7 @@ interface EnrollmentCardProps {
   groups: Group[]
   classifications: PaymentClassification[]
   payments: Payment[]
-  onCellClick?: (month: string) => void
+  onCellClick?: (month: string, enrollmentId: string) => void
   onClassificationChange?: (classificationId: string | null) => void
   onEndEnrollment?: (endDate: string) => void
   onRenew?: () => void
@@ -256,7 +256,7 @@ export default function EnrollmentCard({
                   return (
                     <tr
                       key={lm.month}
-                      onClick={onCellClick ? () => onCellClick(lm.month) : undefined}
+                      onClick={onCellClick ? () => onCellClick(lm.month, enrollment.id) : undefined}
                       style={{ cursor: onCellClick ? 'pointer' : 'default' }}
                       title={onCellClick ? t('pupil_detail.override') : undefined}
                     >

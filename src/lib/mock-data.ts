@@ -54,6 +54,7 @@ export const pupils: Pupil[] = [
     category: 'standard',
     condition: '',
     archived: false,
+    source: 'manual' as const,
     tagIds: [],
     notes: [{ id: 'n1', date: '2025-09-01', text: 'Great progress in first lesson.' }],
     enrollments: [{
@@ -84,6 +85,7 @@ export const pupils: Pupil[] = [
     category: 'standard',
     condition: '',
     archived: false,
+    source: 'manual' as const,
     tagIds: [],
     notes: [],
     enrollments: [{
@@ -114,6 +116,7 @@ export const pupils: Pupil[] = [
     category: 'staff',
     condition: '',
     archived: false,
+    source: 'manual' as const,
     tagIds: [],
     notes: [],
     enrollments: [{
@@ -147,6 +150,7 @@ export const pupils: Pupil[] = [
     category: 'social',
     condition: 'Low income family',
     archived: false,
+    source: 'manual' as const,
     tagIds: ['tag1'],
     notes: [{ id: 'n2', date: '2025-10-15', text: 'Scholarship approved for this academic year.' }],
     enrollments: [{
@@ -177,6 +181,7 @@ export const pupils: Pupil[] = [
     category: 'standard',
     condition: '',
     archived: false,
+    source: 'manual' as const,
     tagIds: [],
     notes: [],
     enrollments: [{
@@ -207,6 +212,7 @@ export const pupils: Pupil[] = [
     category: 'standard',
     condition: '',
     archived: false,
+    source: 'manual' as const,
     tagIds: ['tag2'],
     notes: [{ id: 'n3', date: '2026-07-01', text: 'Called parent regarding overdue payments.' }],
     enrollments: [{
@@ -240,6 +246,7 @@ export const pupils: Pupil[] = [
     category: 'standard',
     condition: '',
     archived: false,
+    source: 'manual' as const,
     tagIds: [],
     notes: [],
     enrollments: [{
@@ -270,6 +277,7 @@ export const pupils: Pupil[] = [
     category: 'standard',
     condition: '',
     archived: false,
+    source: 'manual' as const,
     tagIds: [],
     notes: [{ id: 'n4', date: '2026-04-10', text: 'Payment received but cheque bounced. Clarifying with bank.' }],
     enrollments: [{
@@ -300,6 +308,7 @@ export const pupils: Pupil[] = [
     category: 'flagged',
     condition: 'Payment issues — escalated',
     archived: false,
+    source: 'manual' as const,
     tagIds: ['tag2'],
     notes: [
       { id: 'n5', date: '2026-01-15', text: 'Second reminder sent to family.' },
@@ -333,6 +342,7 @@ export const pupils: Pupil[] = [
     category: 'standard',
     condition: '',
     archived: false,
+    source: 'manual' as const,
     tagIds: [],
     notes: [],
     enrollments: [{
@@ -366,6 +376,7 @@ export const pupils: Pupil[] = [
     category: 'standard',
     condition: '',
     archived: false,
+    source: 'manual' as const,
     tagIds: [],
     notes: [{ id: 'n7', date: '2026-02-10', text: 'Parent requested instalment plan for spring semester.' }],
     enrollments: [{
@@ -396,6 +407,7 @@ export const pupils: Pupil[] = [
     category: 'standard',
     condition: '',
     archived: false,
+    source: 'manual' as const,
     tagIds: [],
     notes: [],
     enrollments: [{
@@ -426,6 +438,7 @@ export const pupils: Pupil[] = [
     category: 'standard',
     condition: '',
     archived: true,
+    source: 'manual' as const,
     tagIds: [],
     notes: [{ id: 'n8', date: '2026-03-31', text: 'Family relocated to Tbilisi center.' }],
     enrollments: [{
@@ -456,6 +469,7 @@ export const pupils: Pupil[] = [
     category: 'standard',
     condition: '',
     archived: true,
+    source: 'manual' as const,
     tagIds: [],
     notes: [],
     enrollments: [{
@@ -486,6 +500,7 @@ export const pupils: Pupil[] = [
     category: 'social',
     condition: 'Scholarship recipient',
     archived: true,
+    source: 'manual' as const,
     tagIds: ['tag1'],
     notes: [],
     enrollments: [{
@@ -696,6 +711,7 @@ export const applications: Application[] = [
     pupilFirstName: 'Mariana',
     pupilSurname: 'Tkeshelashvili',
     birthDate: '2016-04-22',
+    idNumber: '',
     parents: [{ name: 'Ekaterine Tkeshelashvili', phone: '+995 555 200 001' }],
     documentFilename: 'birth_certificate_tkeshelashvili.pdf',
     customValues: [
@@ -710,6 +726,7 @@ export const applications: Application[] = [
     pupilFirstName: 'Giorgi',
     pupilSurname: 'Sichinava',
     birthDate: '2015-11-03',
+    idNumber: '',
     parents: [
       { name: 'Tamar Sichinava', phone: '+995 555 200 002' },
       { name: 'Irakli Sichinava', phone: '+995 555 200 012' },
@@ -727,6 +744,7 @@ export const applications: Application[] = [
     pupilFirstName: 'Nita',
     pupilSurname: 'Alibegashvili',
     birthDate: '2014-07-15',
+    idNumber: '',
     parents: [{ name: 'Manana Alibegashvili', phone: '+995 555 200 003' }],
     documentFilename: 'birth_certificate_alibegashvili.pdf',
     customValues: [

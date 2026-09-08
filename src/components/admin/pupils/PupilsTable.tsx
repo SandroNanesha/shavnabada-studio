@@ -248,7 +248,7 @@ export default function PupilsTable({
                 {/* Group */}
                 <td style={{ ...stickyTd(LEFT_GROUP, COL_GROUP, true, isHovered), whiteSpace: 'normal' }}>
                   {activeGroupNames.length === 0 ? '—' : activeGroupNames.map((name, i) => (
-                    <span key={i} style={{ display: 'inline-block', marginRight: 3, marginBottom: 1, padding: '0 5px', borderRadius: 10, fontSize: 10, fontWeight: 600, backgroundColor: '#dbeafe', color: '#1d4ed8', whiteSpace: 'nowrap' }}>
+                    <span key={i} style={{ display: 'inline-block', marginRight: 3, marginBottom: 1, padding: '0 4px', borderRadius: 3, fontSize: 10, fontWeight: 500, backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', whiteSpace: 'nowrap' }}>
                       {name}
                     </span>
                   ))}

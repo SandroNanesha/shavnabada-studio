@@ -1,9 +1,21 @@
 export const dynamic = 'force-dynamic'
 
-import { getApplications } from '@/lib/data'
+import { getApplications, getForms, getGroups, getClassifications } from '@/lib/data'
 import ApplicationsView from '@/components/admin/ApplicationsView'
 
 export default async function ApplicationsPage() {
-  const applications = await getApplications()
-  return <ApplicationsView applications={applications} />
+  const [applications, forms, groups, classifications] = await Promise.all([
+    getApplications(),
+    getForms(),
+    getGroups(),
+    getClassifications(),
+  ])
+  return (
+    <ApplicationsView
+      applications={applications}
+      forms={forms}
+      groups={groups}
+      classifications={classifications}
+    />
+  )
 }

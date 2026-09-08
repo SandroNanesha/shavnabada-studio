@@ -176,9 +176,12 @@ export default function GroupsClient({ initialLocations, initialGroups, initialT
                   <span style={{ fontSize: 13, fontWeight: 700 }}>{location.name}</span>
                   <button
                     onClick={() => openEditLocation(location)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: 11, padding: 0 }}
+                    title={t('common.edit')}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 2, display: 'inline-flex', alignItems: 'center' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#e2e8f0')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}
                   >
-                    {t('common.edit')}
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/></svg>
                   </button>
                 </div>
                 <button
@@ -205,8 +208,7 @@ export default function GroupsClient({ initialLocations, initialGroups, initialT
                       <tr style={{ backgroundColor: '#f6f8fa' }}>
                         <th style={{ ...th, paddingLeft: 28 }}>{t('groups.group')}</th>
                         <th style={th}>{t('groups.teacher')}</th>
-                        <th style={th}>{t('groups.role')}</th>
-                        <th style={{ ...th, width: 60 }}>{t('common.actions')}</th>
+                        <th style={{ ...th, width: 36 }}></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -223,17 +225,15 @@ export default function GroupsClient({ initialLocations, initialGroups, initialT
                                 : groupTeachers.map(tch => tch.name).join(', ')
                               }
                             </td>
-                            <td style={{ ...td, color: '#6b7280' }}>
-                              {groupTeachers.map(tch =>
-                                tch.role === 'Principal' ? t('teachers.role_principal') : t('teachers.role_assistant')
-                              ).join(', ')}
-                            </td>
-                            <td style={{ ...td, textAlign: 'center' }}>
+                            <td style={{ ...td, textAlign: 'center', padding: '4px 8px' }}>
                               <button
                                 onClick={() => openEditGroup(group)}
-                                style={{ color: '#1d4ed8', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, padding: 0 }}
+                                title={t('common.edit')}
+                                style={{ color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'inline-flex', alignItems: 'center' }}
+                                onMouseEnter={e => (e.currentTarget.style.color = '#1d4ed8')}
+                                onMouseLeave={e => (e.currentTarget.style.color = '#6b7280')}
                               >
-                                {t('common.edit')}
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/></svg>
                               </button>
                             </td>
                           </tr>

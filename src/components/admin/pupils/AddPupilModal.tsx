@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
-import type { Pupil, Group, PaymentClassification, PupilParent } from '@/types'
+import { useState, useEffect } from 'react'
+import type { Pupil, Group, PaymentClassification, PupilParent, PupilSource } from '@/types'
 import { useLanguage } from '@/lib/i18n/context'
 import { effectiveFee } from '@/lib/ledger'
 import { DatePicker, MonthPicker } from './DatePickers'
@@ -11,6 +11,12 @@ interface AddPupilModalProps {
   classifications: PaymentClassification[]
   onSave: (pupil: Pupil) => void
   onClose: () => void
+  prefillFirstName?: string
+  prefillSurname?: string
+  prefillBirthDate?: string
+  prefillIdNumber?: string
+  prefillParents?: PupilParent[]
+  source?: PupilSource
 }
 
 const STANDARD_BASE_FEE = 80
@@ -25,7 +31,7 @@ const lbl: React.CSSProperties = {
   fontSize: 11, fontWeight: 600, color: '#374151', marginBottom: 4, display: 'block',
 }
 
-export default function AddPupilModal({ groups, classifications, onSave, onClose }: AddPupilModalProps) {
+export default function AddPupilModal({ groups, classifications, onSave, onClose, prefillFirstName, prefillSurname, prefillBirthDate, prefillIdNumber, prefillParents, source }: AddPupilModalProps) {
   const { t } = useLanguage()
   const [isMobile, setIsMobile] = useState(false)
 
@@ -36,47 +42,44 @@ export default function AddPupilModal({ groups, classifications, onSave, onClose
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  const [firstName, setFirstName] = useState('')
-  const [surname, setSurname] = useState('')
-  const [idNumber, setIdNumber] = useState('')
-  const [birthDate, setBirthDate] = useState('')
-  const [parents, setParents] = useState<PupilParent[]>([{ name: '', phone: '' }])
-  const [groupId, setGroupId] = useState('')
+  const [firstName, setFirstName] = useState(prefillFirstName ?? '')
+  const [surname, setSurname] = useState(prefillSurname ?? '')
+  const [idNumber, setIdNumber] = useState(prefillIdNumber ?? '')
+  const [birthDate, setBirthDate] = useState(prefillBirthDate ?? '')
+  const [parents, setParents] = useState<PupilParent[]>(
+    prefillParents && prefillParents.length > 0 ? prefillParents : [{ name: '', phone: '' }]
+  )
+  type EnrollmentDraft = { groupId: string; startDate: string; classificationId: string; customFirstMonth: boolean; customFirstMonthDue: string }
   const now = new Date()
-  const [startDate, setStartDate] = useState(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`)
-  const [classificationId, setClassificationId] = useState('')
-  const [customFirstMonth, setCustomFirstMonth] = useState(false)
-  const [customFirstMonthDue, setCustomFirstMonthDue] = useState('')
+  const defaultStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+  const [enrollmentDrafts, setEnrollmentDrafts] = useState<EnrollmentDraft[]>([{ groupId: '', startDate: defaultStart, classificationId: '', customFirstMonth: false, customFirstMonthDue: '' }])
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // YYYY-MM of the selected start date
-  const startMonth = startDate.slice(0, 7)
+  const setEnrollmentField = <K extends keyof EnrollmentDraft>(i: number, field: K, value: EnrollmentDraft[K]) =>
+    setEnrollmentDrafts(prev => prev.map((e, idx) => idx === i ? { ...e, [field]: value } : e))
+
+  const addEnrollmentDraft = () =>
+    setEnrollmentDrafts(prev => [...prev, { groupId: '', startDate: defaultStart, classificationId: '', customFirstMonth: false, customFirstMonthDue: '' }])
+
+  const removeEnrollmentDraft = (i: number) =>
+    setEnrollmentDrafts(prev => prev.filter((_, idx) => idx !== i))
 
   const setParentField = (i: number, field: keyof PupilParent, value: string) =>
     setParents(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p))
   const addParent = () => setParents(prev => [...prev, { name: '', phone: '' }])
   const removeParent = (i: number) => setParents(prev => prev.filter((_, idx) => idx !== i))
 
-  const previewFee = useMemo(() => {
-    const fakeEnrollment = {
-      baseFee: STANDARD_BASE_FEE,
-      discount: 0,
-      classificationId: classificationId || null,
-    } as Parameters<typeof effectiveFee>[0]
-    return effectiveFee(fakeEnrollment, classifications)
-  }, [classificationId, classifications])
-
-  // When checkbox is first ticked, pre-fill with the effective fee
-  const handleCustomFirstMonthToggle = (checked: boolean) => {
-    setCustomFirstMonth(checked)
-    if (checked && !customFirstMonthDue) setCustomFirstMonthDue(String(previewFee))
-  }
+  const previewFee = (classificationId: string) => effectiveFee(
+    { baseFee: STANDARD_BASE_FEE, discount: 0, classificationId: classificationId || null } as Parameters<typeof effectiveFee>[0],
+    classifications
+  )
 
   const validate = () => {
     const errs: Record<string, string> = {}
     if (!firstName.trim()) errs.firstName = t('teachers.name_required')
     if (!surname.trim()) errs.surname = t('teachers.name_required')
     if (!idNumber.trim()) errs.idNumber = t('pupils.id_required')
+    if (!birthDate.trim()) errs.birthDate = t('teachers.name_required')
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -98,14 +101,17 @@ export default function AddPupilModal({ groups, classifications, onSave, onClose
           idNumber: idNumber.trim(),
           birthDate,
           parents: parents.filter(p => p.name.trim() || p.phone.trim()),
-          enrollment: groupId ? {
-            groupId,
-            startDate,
-            classificationId: classificationId || null,
-            firstMonthDueOverride: customFirstMonth && customFirstMonthDue
-              ? parseFloat(customFirstMonthDue)
-              : undefined,
-          } : undefined,
+          source: source ?? 'manual',
+          enrollments: enrollmentDrafts
+            .filter(e => e.groupId)
+            .map(e => ({
+              groupId: e.groupId,
+              startDate: e.startDate,
+              classificationId: e.classificationId || null,
+              firstMonthDueOverride: e.customFirstMonth && e.customFirstMonthDue
+                ? parseFloat(e.customFirstMonthDue)
+                : undefined,
+            })),
         }),
       })
       if (!res.ok) {
@@ -121,6 +127,15 @@ export default function AddPupilModal({ groups, classifications, onSave, onClose
       setSaving(false)
     }
   }
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onClose(); return }
+      if (e.key === 'Enter' && !(e.target instanceof HTMLTextAreaElement)) handleSave()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  })
 
   const section = (title: string) => (
     <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9ca3af', marginBottom: 8, marginTop: 4 }}>
@@ -206,8 +221,9 @@ export default function AddPupilModal({ groups, classifications, onSave, onClose
               {errors.idNumber && <div style={{ fontSize: 11, color: '#dc2626', marginTop: 2 }}>{errors.idNumber}</div>}
             </div>
             <div>
-              <label style={lbl}>{t('applications.birth_date')}</label>
+              <label style={lbl}>{t('applications.birth_date')} *</label>
               <DatePicker value={birthDate} onChange={setBirthDate} />
+              {errors.birthDate && <div style={{ fontSize: 11, color: '#dc2626', marginTop: 2 }}>{errors.birthDate}</div>}
             </div>
           </div>
 
@@ -228,8 +244,8 @@ export default function AddPupilModal({ groups, classifications, onSave, onClose
                     <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
                   </svg>
                 </button>
-                <div style={{ paddingRight: 20 }}>
-                  <label style={lbl}>{t('pupil_detail.parent_name')}</label>
+                <div>
+                  <label style={{ ...lbl, paddingRight: 20 }}>სახელი გვარი</label>
                   <input
                     type="text"
                     value={p.name}
@@ -256,91 +272,95 @@ export default function AddPupilModal({ groups, classifications, onSave, onClose
             </button>
           </div>
 
-          {/* Enrollment */}
+          {/* Enrollments */}
           {section(t('pupils.enrollment_optional'))}
-          <div style={{ border: '1px solid #e5e7eb', borderRadius: 4, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: twoColGrid, gap: 10 }}>
-              <div>
-                <label style={lbl}>{t('groups.group')}</label>
-                <select value={groupId} onChange={e => setGroupId(e.target.value)} style={{ ...inputStyle(), cursor: 'pointer' }}>
-                  <option value="">— {t('teachers.no_group')}</option>
-                  {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={lbl}>{t('pupil_detail.start_date')}</label>
-                <MonthPicker value={startDate} onChange={setStartDate} />
-              </div>
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {enrollmentDrafts.map((e, i) => {
+              const fee = previewFee(e.classificationId)
+              return (
+                <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 4, padding: '10px 12px', position: 'relative', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <button
+                    onClick={() => removeEnrollmentDraft(i)}
+                    style={{ position: 'absolute', top: 6, right: 8, background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: '#9ca3af', display: 'flex', alignItems: 'center' }}
+                    onMouseEnter={ev => (ev.currentTarget.style.color = '#dc2626')}
+                    onMouseLeave={ev => (ev.currentTarget.style.color = '#9ca3af')}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                      <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                    </svg>
+                  </button>
 
-            <div>
-              <label style={lbl}>{t('pupil_detail.classification')}</label>
-              <select
-                value={classificationId}
-                onChange={e => setClassificationId(e.target.value)}
-                style={{ ...inputStyle(), cursor: 'pointer' }}
-              >
-                <option value="">— {t('pupils.standard_rate')} (₾{STANDARD_BASE_FEE})</option>
-                {classifications.map(c => {
-                  const preview = effectiveFee(
-                    { baseFee: STANDARD_BASE_FEE, discount: 0, classificationId: c.id } as Parameters<typeof effectiveFee>[0],
-                    classifications
-                  )
-                  return (
-                    <option key={c.id} value={c.id}>
-                      {c.name} — ₾{preview}/თვე
-                    </option>
-                  )
-                })}
-              </select>
-            </div>
-
-            {/* Custom first month due */}
-            {groupId && (
-              <div style={{ border: '1px solid #e5e7eb', borderRadius: 4, padding: '8px 10px', backgroundColor: '#fafafa' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
-                  <input
-                    type="checkbox"
-                    checked={customFirstMonth}
-                    onChange={e => handleCustomFirstMonthToggle(e.target.checked)}
-                    style={{ cursor: 'pointer', accentColor: '#2563eb' }}
-                  />
-                  <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>
-                    {t('pupils.custom_first_month')}
-                    <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 400, marginLeft: 6 }}>
-                      ({startMonth})
-                    </span>
-                  </span>
-                </label>
-                {customFirstMonth && (
-                  <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 12, color: '#6b7280' }}>₾</span>
-                    <input
-                      type="number"
-                      min={0}
-                      max={previewFee}
-                      step={1}
-                      value={customFirstMonthDue}
-                      onChange={e => setCustomFirstMonthDue(e.target.value)}
-                      style={{ width: 80, padding: '4px 8px', fontSize: 12, border: '1px solid #fcd34d', borderRadius: 4, outline: 'none', backgroundColor: '#fff' }}
-                    />
-                    <span style={{ fontSize: 11, color: '#9ca3af' }}>
-                      {t('pupils.custom_first_month_hint')}
-                    </span>
+                  <div style={{ display: 'grid', gridTemplateColumns: twoColGrid, gap: 10, paddingRight: 20 }}>
+                    <div>
+                      <label style={lbl}>{t('groups.group')}</label>
+                      <select value={e.groupId} onChange={ev => setEnrollmentField(i, 'groupId', ev.target.value)} style={{ ...inputStyle(), cursor: 'pointer' }}>
+                        <option value="">— {t('teachers.no_group')}</option>
+                        {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={lbl}>{t('pupil_detail.start_date')}</label>
+                      <MonthPicker value={e.startDate} onChange={v => setEnrollmentField(i, 'startDate', v)} />
+                    </div>
                   </div>
-                )}
-              </div>
-            )}
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 4, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 11, color: '#6b7280' }}>{t('pupils.monthly_payment')}:</span>
-              <span style={{ fontSize: 16, fontWeight: 700, color: '#166534' }}>₾{previewFee}</span>
-              {classificationId && (
-                <span style={{ fontSize: 11, color: '#6b7280', marginLeft: 4 }}>
-                  ({t('pupils.standard_rate')}: ₾{STANDARD_BASE_FEE})
-                </span>
-              )}
-            </div>
+                  <div>
+                    <label style={lbl}>{t('pupil_detail.classification')}</label>
+                    <select value={e.classificationId} onChange={ev => setEnrollmentField(i, 'classificationId', ev.target.value)} style={{ ...inputStyle(), cursor: 'pointer' }}>
+                      <option value="">— {t('pupils.standard_rate')} (₾{STANDARD_BASE_FEE})</option>
+                      {classifications.map(c => (
+                        <option key={c.id} value={c.id}>{c.name} — ₾{previewFee(c.id)}/თვე</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {e.groupId && (
+                    <div style={{ border: '1px solid #e5e7eb', borderRadius: 4, padding: '8px 10px', backgroundColor: '#fafafa' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
+                        <input
+                          type="checkbox"
+                          checked={e.customFirstMonth}
+                          onChange={ev => {
+                            const checked = ev.target.checked
+                            setEnrollmentField(i, 'customFirstMonth', checked)
+                            if (checked && !e.customFirstMonthDue) setEnrollmentField(i, 'customFirstMonthDue', String(fee))
+                          }}
+                          style={{ cursor: 'pointer', accentColor: '#2563eb' }}
+                        />
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>
+                          {t('pupils.custom_first_month')}
+                          <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 400, marginLeft: 6 }}>({e.startDate.slice(0, 7)})</span>
+                        </span>
+                      </label>
+                      {e.customFirstMonth && (
+                        <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 12, color: '#6b7280' }}>₾</span>
+                          <input
+                            type="number" min={0} max={fee} step={1}
+                            value={e.customFirstMonthDue}
+                            onChange={ev => setEnrollmentField(i, 'customFirstMonthDue', ev.target.value)}
+                            style={{ width: 80, padding: '4px 8px', fontSize: 12, border: '1px solid #fcd34d', borderRadius: 4, outline: 'none', backgroundColor: '#fff' }}
+                          />
+                          <span style={{ fontSize: 11, color: '#9ca3af' }}>{t('pupils.custom_first_month_hint')}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 8px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 4 }}>
+                    <span style={{ fontSize: 11, color: '#6b7280' }}>{t('pupils.monthly_payment')}:</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#166534' }}>₾{fee}</span>
+                  </div>
+                </div>
+              )
+            })}
+            <button
+              onClick={addEnrollmentDraft}
+              style={{ alignSelf: 'flex-start', fontSize: 11, color: '#1d4ed8', background: 'none', border: '1px dashed #93c5fd', borderRadius: 4, cursor: 'pointer', padding: '3px 10px' }}
+            >
+              + {t('pupils.add_enrollment')}
+            </button>
           </div>
         </div>
 

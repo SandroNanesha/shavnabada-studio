@@ -6,13 +6,15 @@ import { useLanguage } from '@/lib/i18n/context'
 import { AppStateProvider } from '@/lib/state/context'
 import { useState, useEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
+import SidebarBrand from '@/components/admin/SidebarBrand'
 
 const navLinks = [
   { href: '/pupils', key: 'nav.pupils' },
-  { href: '/applications', key: 'nav.applications' },
-  { href: '/groups', key: 'nav.groups_locations' },
   { href: '/teachers', key: 'nav.teachers' },
+  { href: '/groups', key: 'nav.groups_locations' },
   { href: '/classifications', key: 'nav.classifications' },
+  { href: '/applications', key: 'nav.applications' },
+  { href: '/settings', key: 'nav.settings' },
 ]
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -39,12 +41,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     <>
       {/* Brand */}
       <div className="px-4 py-4 border-b border-slate-700" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <span className="text-white font-semibold text-sm tracking-wide">
-            {t('brand')}
-          </span>
-          <div className="text-slate-400 text-xs mt-0.5">Shavnabada Studio</div>
-        </div>
+        <SidebarBrand />
         {isMobile && (
           <button
             onClick={closeSidebar}
@@ -113,7 +110,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         {/* Desktop Sidebar */}
         {!isMobile && (
           <aside
-            style={{ width: 200, backgroundColor: '#1e293b', flexShrink: 0 }}
+            style={{ width: 150, backgroundColor: '#1e293b', flexShrink: 0 }}
             className="flex flex-col"
           >
             {sidebarContent}

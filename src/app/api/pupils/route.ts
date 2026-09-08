@@ -13,17 +13,18 @@ export async function GET(req: NextRequest) {
 // Body: {
 //   firstName, surname, idNumber, birthDate,
 //   parents: { name, phone }[],
-//   enrollment?: { groupId, startDate, classificationId? }
+//   enrollments?: { groupId, startDate, classificationId?, firstMonthDueOverride? }[]
 // }
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { firstName, surname, idNumber, birthDate, parents, enrollment } = body as {
+  const { firstName, surname, idNumber, birthDate, parents, enrollments, source } = body as {
     firstName: string
     surname: string
     idNumber: string
     birthDate: string
     parents: { name: string; phone: string }[]
-    enrollment?: { groupId: string; startDate: string; classificationId?: string | null; firstMonthDueOverride?: number }
+    enrollments?: { groupId: string; startDate: string; classificationId?: string | null; firstMonthDueOverride?: number }[]
+    source?: 'manual' | 'application'
   }
 
   if (!firstName?.trim() || !surname?.trim() || !idNumber?.trim()) {
@@ -35,37 +36,40 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'A pupil with this ID number already exists' }, { status: 409 })
   }
 
+  const validEnrollments = (enrollments ?? []).filter(e => e.groupId)
+
   const pupil = await prisma.pupil.create({
     data: {
       firstName: firstName.trim(),
       surname: surname.trim(),
       idNumber: idNumber.trim(),
       birthDate: birthDate ?? '',
+      source: source ?? 'manual',
       parents: {
         create: parents
           .filter(p => p.name.trim() || p.phone.trim())
           .map((p, i) => ({ name: p.name.trim(), phone: p.phone.trim(), order: i })),
       },
-      enrollments: enrollment?.groupId
+      enrollments: validEnrollments.length > 0
         ? {
-            create: [{
-              groupId: enrollment.groupId,
-              startDate: enrollment.startDate,
+            create: validEnrollments.map(e => ({
+              groupId: e.groupId,
+              startDate: e.startDate,
               baseFee: 80,
               discount: 0,
-              classificationId: enrollment.classificationId ?? null,
+              classificationId: e.classificationId ?? null,
               customTerms: '',
               billingActive: true,
               prorateFirstMonth: false,
               monthOverrides: {},
               monthPaidAmountOverrides: {},
-              monthDueOverrides: enrollment.firstMonthDueOverride !== undefined && !isNaN(enrollment.firstMonthDueOverride)
-                ? { [enrollment.startDate.slice(0, 7)]: enrollment.firstMonthDueOverride }
+              monthDueOverrides: e.firstMonthDueOverride !== undefined && !isNaN(e.firstMonthDueOverride)
+                ? { [e.startDate.slice(0, 7)]: e.firstMonthDueOverride }
                 : {},
               ledgerComments: {},
               groupHistory: [],
               classificationHistory: [],
-            }],
+            })),
           }
         : undefined,
     },
@@ -86,6 +90,7 @@ export async function POST(req: NextRequest) {
     category: pupil.category,
     condition: pupil.condition,
     archived: pupil.archived,
+    source: pupil.source,
     tagIds: pupil.tags.map(t => t.tagId),
     parents: pupil.parents.map(p => ({ name: p.name, phone: p.phone })),
     notes: [],

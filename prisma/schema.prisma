@@ -63,6 +63,7 @@ model Pupil {
   category  PupilCategory @default(standard)
   condition String        @default("")
   archived  Boolean       @default(false)
+  source    PupilSource   @default(manual)
 
   parents     PupilParent[]
   notes       PupilNote[]
@@ -137,14 +138,28 @@ model Payment {
   enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
 }
 
+model ApplicationForm {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  fields    Json     @default("[]")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  applications Application[]
+}
+
 model Application {
   id              String            @id @default(cuid())
   pupilFirstName  String
   pupilSurname    String
   birthDate       String
+  idNumber        String            @default("")
   documentFilename String?
   status          ApplicationStatus @default(pending)
   submittedAt     String
+  formId          String?
+  form            ApplicationForm?  @relation(fields: [formId], references: [id])
 
   parents      ApplicationParent[]
   customValues ApplicationCustomValue[]
@@ -165,6 +180,15 @@ model ApplicationCustomValue {
   label         String
   value         String
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model Settings {
+  id             String @id @default("singleton")
+  studioName     String @default("Shavnabada Studio")
+  futureMonths   Int    @default(2)
+  paymentDueDay  Int    @default(1)
+  platformLogo   String @default("")
+  formLogo       String @default("")
 }
 
 enum TeacherRole {
@@ -190,4 +214,9 @@ enum ApplicationStatus {
   pending
   approved
   dismissed
+}
+
+enum PupilSource {
+  manual
+  application
 }

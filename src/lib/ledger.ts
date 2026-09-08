@@ -1,8 +1,9 @@
 import type { Enrollment, Payment, PaymentClassification, LedgerMonth, MonthOverrideStatus } from '@/types'
 
 // Generate YYYY-MM strings from startDate to endDate (or today = 2026-09)
-export function generateMonths(startDate: string, endDate: string | null): string[] {
+export function generateMonths(startDate: string, endDate: string | null, futureMonths = 0): string[] {
   const now = new Date()
+  now.setMonth(now.getMonth() + futureMonths)
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   const start = startDate.slice(0, 7) // YYYY-MM
   const end = endDate ? endDate.slice(0, 7) : today

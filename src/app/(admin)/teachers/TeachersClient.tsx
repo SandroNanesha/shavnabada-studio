@@ -125,10 +125,9 @@ export default function TeachersClient({ initialTeachers, groups }: TeachersClie
           <thead>
             <tr>
               <th style={th}>{t('teachers.name')}</th>
-              <th style={th}>{t('teachers.role')}</th>
               <th style={th}>{t('teachers.group')}</th>
               <th style={th}>{t('teachers.contact')}</th>
-              <th style={{ ...th, width: 60 }}></th>
+              <th style={{ ...th, width: 36 }}></th>
             </tr>
           </thead>
           <tbody>
@@ -136,33 +135,24 @@ export default function TeachersClient({ initialTeachers, groups }: TeachersClie
               <tr key={teacher.id}>
                 <td style={{ ...td, fontWeight: 500, color: '#111827' }}>{teacher.name}</td>
                 <td style={td}>
-                  <span style={{
-                    backgroundColor: teacher.role === 'Principal' ? '#ede9fe' : '#f3f4f6',
-                    color: teacher.role === 'Principal' ? '#6d28d9' : '#374151',
-                    padding: '1px 6px', borderRadius: 10, fontSize: 11, fontWeight: 600,
-                  }}>
-                    {roleLabel(teacher.role)}
-                  </span>
-                </td>
-                <td style={td}>
                   {teacher.groupIds.length > 0
                     ? <span style={{ color: '#374151' }}>{teacher.groupIds.map(id => groupMap.get(id) ?? id).join(', ')}</span>
                     : <span style={{ color: '#9ca3af' }}>{t('teachers.no_group')}</span>}
                 </td>
                 <td style={{ ...td, fontFamily: 'monospace', color: '#374151' }}>{teacher.contact}</td>
-                <td style={{ ...td, textAlign: 'center' }}>
-                  <button onClick={() => openEdit(teacher)} style={{
-                    color: '#1d4ed8', background: 'none', border: 'none',
-                    cursor: 'pointer', fontSize: 11, padding: 0,
-                  }}>
-                    {t('common.edit')}
+                <td style={{ ...td, textAlign: 'center', padding: '4px 8px' }}>
+                  <button onClick={() => openEdit(teacher)} title={t('common.edit')} style={{ color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'inline-flex', alignItems: 'center' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#1d4ed8')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#6b7280')}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/></svg>
                   </button>
                 </td>
               </tr>
             ))}
             {teachers.length === 0 && (
               <tr>
-                <td colSpan={5} style={{ ...td, textAlign: 'center', color: '#9ca3af', padding: 20 }}>
+                <td colSpan={4} style={{ ...td, textAlign: 'center', color: '#9ca3af', padding: 20 }}>
                   {t('common.no_data')}
                 </td>
               </tr>
@@ -207,21 +197,6 @@ export default function TeachersClient({ initialTeachers, groups }: TeachersClie
                   style={inputStyle(!!errors.name)}
                 />
                 {errors.name && <div style={{ fontSize: 11, color: '#dc2626', marginTop: 3 }}>{errors.name}</div>}
-              </div>
-
-              {/* Role */}
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#374151', marginBottom: 4 }}>
-                  {t('teachers.role')}
-                </label>
-                <select
-                  value={modal.teacher.role}
-                  onChange={e => setField('role', e.target.value as TeacherRole)}
-                  style={{ ...inputStyle(), cursor: 'pointer' }}
-                >
-                  <option value="Principal">{t('teachers.role_principal')}</option>
-                  <option value="Assistant">{t('teachers.role_assistant')}</option>
-                </select>
               </div>
 
               {/* Groups (multi-select checkboxes) */}

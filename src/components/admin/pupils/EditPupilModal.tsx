@@ -61,6 +61,7 @@ export default function EditPupilModal({ pupil, currentEdit, onSave, onClose }: 
     if (!firstName.trim()) errs.firstName = t('teachers.name_required')
     if (!surname.trim()) errs.surname = t('teachers.name_required')
     if (!idNumber.trim()) errs.idNumber = t('pupils.id_required')
+    if (!birthDate.trim()) errs.birthDate = t('teachers.name_required')
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -75,6 +76,15 @@ export default function EditPupilModal({ pupil, currentEdit, onSave, onClose }: 
       parents: parents.filter(p => p.name.trim() || p.phone.trim()),
     })
   }
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onClose(); return }
+      if (e.key === 'Enter' && !(e.target instanceof HTMLTextAreaElement)) handleSave()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  })
 
   const section = (title: string) => (
     <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9ca3af', marginBottom: 8, marginTop: 4 }}>
@@ -158,8 +168,9 @@ export default function EditPupilModal({ pupil, currentEdit, onSave, onClose }: 
               {errors.idNumber && <div style={{ fontSize: 11, color: '#dc2626', marginTop: 2 }}>{errors.idNumber}</div>}
             </div>
             <div>
-              <label style={lbl}>{t('applications.birth_date')}</label>
+              <label style={lbl}>{t('applications.birth_date')} *</label>
               <DatePicker value={birthDate} onChange={setBirthDate} />
+              {errors.birthDate && <div style={{ fontSize: 11, color: '#dc2626', marginTop: 2 }}>{errors.birthDate}</div>}
             </div>
           </div>
 
@@ -180,8 +191,8 @@ export default function EditPupilModal({ pupil, currentEdit, onSave, onClose }: 
                     <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
                   </svg>
                 </button>
-                <div style={{ paddingRight: 20 }}>
-                  <label style={lbl}>{t('pupil_detail.parent_name')}</label>
+                <div>
+                  <label style={{ ...lbl, paddingRight: 20 }}>სახელი გვარი</label>
                   <input
                     type="text"
                     value={p.name}

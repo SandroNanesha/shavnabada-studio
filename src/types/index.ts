@@ -1,5 +1,6 @@
 export type PaymentClassificationType = 'standard' | 'percent' | 'amount' | 'fixed'
 export type PupilCategory = 'standard' | 'staff' | 'social' | 'flagged'
+export type PupilSource = 'manual' | 'application'
 export type MonthOverrideStatus = 'paid' | 'unpaid' | 'partial' | 'confusion' | 'exempt'
 export type ApplicationStatus = 'pending' | 'approved' | 'dismissed'
 export type TeacherRole = 'Principal' | 'Assistant'
@@ -46,6 +47,7 @@ export interface Pupil {
   category: PupilCategory
   condition: string
   archived: boolean
+  source: PupilSource
   tagIds: string[]
   notes: PupilNote[]
   enrollments: Enrollment[]
@@ -62,16 +64,42 @@ export interface Payment {
 export interface ApplicationCustomField { id: string; label: string; required: boolean }
 export interface ApplicationFormConfig { requireDocument: boolean; maxParents: number; customFields: ApplicationCustomField[] }
 
+export type FormFieldType = 'text' | 'phone' | 'date' | 'textarea'
+
+export interface ApplicationFormField {
+  id: string
+  label: string
+  type: FormFieldType
+  required: boolean
+}
+
+export interface ApplicationForm {
+  id: string
+  title: string
+  slug: string
+  fields: ApplicationFormField[]
+  active: boolean
+  createdAt: string
+}
+
 export interface Application {
   id: string
   pupilFirstName: string
   pupilSurname: string
   birthDate: string
+  idNumber: string
   parents: PupilParent[]
   documentFilename: string | null
   customValues: { label: string; value: string }[]
   status: ApplicationStatus
   submittedAt: string
+  formId?: string | null
+}
+
+export interface AppSettings {
+  futureMonths: number
+  platformLogo: string
+  formLogo: string
 }
 
 // Computed

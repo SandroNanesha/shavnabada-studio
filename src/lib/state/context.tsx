@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import type { MonthOverrideStatus, PupilParent, Pupil } from '@/types'
 
 export interface PupilBasicEdit {
@@ -37,6 +37,11 @@ interface AppState {
   archivedOverrides: Record<string, boolean>
   // manually added pupils (prepended to mock list)
   addedPupils: Pupil[]
+  futureMonths: number
+  paymentDueDay: number
+  studioName: string
+  platformLogo: string
+  formLogo: string
 }
 
 interface AppStateActions {
@@ -49,6 +54,11 @@ interface AppStateActions {
   setPupilFilters: (patch: Partial<AppState['pupilFilters']>) => void
   setArchivedOverride: (pupilId: string, archived: boolean) => void
   addPupil: (pupil: Pupil) => void
+  setFutureMonths: (n: number) => void
+  setPaymentDueDay: (n: number) => void
+  setStudioName: (name: string) => void
+  setPlatformLogo: (url: string) => void
+  setFormLogo: (url: string) => void
 }
 
 const AppStateContext = createContext<(AppState & AppStateActions) | null>(null)
@@ -143,10 +153,33 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setAddedPupils(prev => [pupil, ...prev])
   }
 
+  const [futureMonths, setFutureMonthsState] = useState(2)
+  const setFutureMonths = (n: number) => setFutureMonthsState(n)
+  const [paymentDueDay, setPaymentDueDayState] = useState(1)
+  const setPaymentDueDay = (n: number) => setPaymentDueDayState(n)
+  const [studioName, setStudioNameState] = useState('Shavnabada Studio')
+  const setStudioName = (name: string) => setStudioNameState(name)
+  const [platformLogo, setPlatformLogoState] = useState('')
+  const [formLogo, setFormLogoState] = useState('')
+  const setPlatformLogo = (url: string) => setPlatformLogoState(url)
+  const setFormLogo = (url: string) => setFormLogoState(url)
+
+  useEffect(() => {
+    fetch('/api/settings').then(r => r.json()).then((s: { studioName: string; futureMonths: number; paymentDueDay: number; platformLogo: string; formLogo: string }) => {
+      setStudioNameState(s.studioName ?? 'Shavnabada Studio')
+      setFutureMonthsState(s.futureMonths ?? 2)
+      setPaymentDueDayState(s.paymentDueDay ?? 1)
+      setPlatformLogoState(s.platformLogo ?? '')
+      setFormLogoState(s.formLogo ?? '')
+    }).catch(() => {})
+  }, [])
+
   return (
     <AppStateContext.Provider value={{
       monthOverrides, paidAmountOverrides, dueOverrides, classificationOverrides, ledgerComments, pupilEdits, pupilFilters, archivedOverrides, addedPupils,
+      futureMonths, paymentDueDay, studioName, platformLogo, formLogo,
       setMonthOverride, setPaidAmountOverride, setDueOverride, setClassificationOverride, setLedgerComment, setPupilEdit, setPupilFilters, setArchivedOverride, addPupil,
+      setFutureMonths, setPaymentDueDay, setStudioName, setPlatformLogo, setFormLogo,
     }}>
       {children}
     </AppStateContext.Provider>

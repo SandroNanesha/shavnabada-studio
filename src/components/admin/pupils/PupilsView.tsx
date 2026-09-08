@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import Fuse from 'fuse.js'
 import type { Pupil, Group, PaymentClassification, Payment, MonthOverrideStatus } from '@/types'
 import { computeLedger, combinedMonthStatus, generateMonths, deriveStatus, effectiveFee } from '@/lib/ledger'
 import { useAppState } from '@/lib/state/context'
@@ -36,6 +37,7 @@ export default function PupilsView({ pupils, initialNextCursor, groups, classifi
     archivedOverrides, pupilEdits,
     setMonthOverride, setPaidAmountOverride, setDueOverride,
     addedPupils, addPupil,
+    futureMonths,
   } = useAppState()
 
   const [showAddModal, setShowAddModal] = useState(false)
@@ -106,12 +108,16 @@ export default function PupilsView({ pupils, initialNextCursor, groups, classifi
     })
 
     if (search.trim()) {
-      const q = search.trim().toLowerCase()
-      result = result.filter(p => {
-        const full = `${p.firstName} ${p.surname}`.toLowerCase()
-        const fullRev = `${p.surname} ${p.firstName}`.toLowerCase()
-        return full.includes(q) || fullRev.includes(q)
+      const fuse = new Fuse(result, {
+        keys: [
+          { name: 'firstName', weight: 0.35 },
+          { name: 'surname', weight: 0.35 },
+          { name: 'idNumber', weight: 0.3 },
+        ],
+        threshold: 0.4,
+        includeScore: true,
       })
+      result = fuse.search(search.trim()).map(r => r.item)
     }
 
     if (groupFilter) {
@@ -122,7 +128,7 @@ export default function PupilsView({ pupils, initialNextCursor, groups, classifi
       result = result.filter(p => {
         for (const month of months) {
           const statuses = p.enrollments
-            .filter(e => generateMonths(e.startDate, e.endDate).includes(month))
+            .filter(e => generateMonths(e.startDate, e.endDate, futureMonths).includes(month))
             .map(e => {
               const ledger = computeLedger(e, payments, classifications)
               return ledger.find(l => l.month === month)?.status ?? null
@@ -151,7 +157,7 @@ export default function PupilsView({ pupils, initialNextCursor, groups, classifi
     const pupilWithOvr = pupilsWithOverrides.find(p => p.id === pupil.id) ?? pupil
 
     return pupilWithOvr.enrollments
-      .filter(e => generateMonths(e.startDate, e.endDate).includes(month))
+      .filter(e => generateMonths(e.startDate, e.endDate, futureMonths).includes(month))
       .flatMap(e => {
         const ledger = computeLedger(e, payments, classifications)
         const lm = ledger.find(l => l.month === month)
