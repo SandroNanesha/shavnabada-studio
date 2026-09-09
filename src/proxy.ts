@@ -15,12 +15,25 @@ export default auth((req) => {
   }
 
   // Public routes
-  if (pathname.startsWith('/apply') || pathname.startsWith('/api/apply') || pathname === '/login') {
+  if (pathname.startsWith('/apply') || pathname.startsWith('/api/apply') || pathname === '/login' || pathname.startsWith('/api/auth')) {
+    return NextResponse.next()
+  }
+
+  // Super admin API routes — allow super_admin through
+  if (pathname.startsWith('/api/superadmin')) {
+    if (!session || (session.user as { role: string }).role !== 'super_admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     return NextResponse.next()
   }
 
   // Admin routes — require studio session
   if (!session?.user?.studioId) {
+    // Super admin can access admin routes if they have a studio cookie
+    const role = (session?.user as { role?: string })?.role
+    if (role === 'super_admin' && req.cookies.get('sa_studio_id')?.value) {
+      return NextResponse.next()
+    }
     return NextResponse.redirect(new URL('/login', req.url))
   }
 

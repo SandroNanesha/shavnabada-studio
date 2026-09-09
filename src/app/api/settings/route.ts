@@ -12,8 +12,7 @@ export async function GET() {
   if (!studioId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    let s = await prisma.settings.findUnique({ where: { studioId } })
-    if (!s) s = await prisma.settings.create({ data: { studioId } })
+    const s = await prisma.settings.upsert({ where: { studioId }, update: {}, create: { studioId } })
     return NextResponse.json(toResponse(s))
   } catch (err) {
     console.error('[settings GET]', err)

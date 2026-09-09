@@ -230,7 +230,7 @@ model ApplicationCustomValue {
 }
 
 model Settings {
-  id            String  @id @default("singleton")
+  id            String  @id @default(cuid())
   studioName    String  @default("Shavnabada Studio")
   futureMonths  Int     @default(2)
   paymentDueDay Int     @default(1)

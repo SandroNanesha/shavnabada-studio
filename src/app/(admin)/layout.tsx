@@ -23,6 +23,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const { t, lang, setLang } = useLanguage()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [isSuperAdminView, setIsSuperAdminView] = useState(false)
+
+  useEffect(() => {
+    setIsSuperAdminView(document.cookie.includes('sa_studio_id='))
+  }, [])
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -103,8 +108,16 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </div>
       </div>
 
-      {/* Sign out */}
-      <div className="px-4 pb-4">
+      {/* Sign out / back */}
+      <div className="px-4 pb-4" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {isSuperAdminView && (
+          <a
+            href="/api/superadmin/exit-studio"
+            style={{ display: 'block', textAlign: 'center', padding: '6px', fontSize: 11, borderRadius: 4, border: '1px solid #2563eb', backgroundColor: 'transparent', color: '#60a5fa', cursor: 'pointer', textDecoration: 'none' }}
+          >
+            ← Superadmin
+          </a>
+        )}
         <button
           onClick={() => signOut({ redirectTo: '/login' })}
           style={{ width: '100%', padding: '6px', fontSize: 11, borderRadius: 4, border: '1px solid #475569', backgroundColor: 'transparent', color: '#94a3b8', cursor: 'pointer' }}

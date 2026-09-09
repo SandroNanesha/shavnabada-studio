@@ -7,8 +7,11 @@ export const dynamic = 'force-dynamic'
 export default async function SettingsPage() {
   const { studioId } = await requireStudioSession()
 
-  let s = await prisma.settings.findUnique({ where: { studioId } })
-  if (!s) s = await prisma.settings.create({ data: { studioId } })
+  const s = await prisma.settings.upsert({
+    where: { studioId },
+    update: {},
+    create: { studioId },
+  })
 
   const settings = {
     studioName: s.studioName,
