@@ -16,6 +16,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Studio Admin",
   description: "Shavnabada Music Studio — Admin Panel",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Studio Admin",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

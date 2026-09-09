@@ -98,6 +98,13 @@ export default function ApplicationsView({
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabType>('forms')
   const [search, setSearch] = useState('')
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   // Auto-refresh every 30 seconds
   useEffect(() => {
@@ -309,7 +316,7 @@ export default function ApplicationsView({
             <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
               {t('applications.add_field')}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: 8, alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <input
                 type="text"
                 value={newFieldDraftState.label}
@@ -318,31 +325,33 @@ export default function ApplicationsView({
                 placeholder={t('applications.field_label')}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addFieldToDraft() } }}
               />
-              <select
-                value={newFieldDraftState.type}
-                onChange={e => setNewFieldDraftState(prev => ({ ...prev, type: e.target.value as FormFieldType }))}
-                style={{ ...inputStyle, width: 'auto', cursor: 'pointer' }}
-              >
-                <option value="text">text</option>
-                <option value="phone">phone</option>
-                <option value="date">date</option>
-                <option value="textarea">textarea</option>
-              </select>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#374151', whiteSpace: 'nowrap', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={newFieldDraftState.required}
-                  onChange={e => setNewFieldDraftState(prev => ({ ...prev, required: e.target.checked }))}
-                  style={{ accentColor: '#2563eb', cursor: 'pointer' }}
-                />
-                {t('applications.field_req')}
-              </label>
-              <button
-                onClick={addFieldToDraft}
-                style={{ padding: '5px 10px', fontSize: 11, borderRadius: 4, border: '1px solid #93c5fd', backgroundColor: '#eff6ff', color: '#1d4ed8', cursor: 'pointer', fontWeight: 600, whiteSpace: 'nowrap' }}
-              >
-                + {t('applications.add_field')}
-              </button>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+                <select
+                  value={newFieldDraftState.type}
+                  onChange={e => setNewFieldDraftState(prev => ({ ...prev, type: e.target.value as FormFieldType }))}
+                  style={{ ...inputStyle, width: isMobile ? '100%' : 'auto', cursor: 'pointer' }}
+                >
+                  <option value="text">text</option>
+                  <option value="phone">phone</option>
+                  <option value="date">date</option>
+                  <option value="textarea">textarea</option>
+                </select>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#374151', whiteSpace: 'nowrap', cursor: 'pointer', flexShrink: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={newFieldDraftState.required}
+                    onChange={e => setNewFieldDraftState(prev => ({ ...prev, required: e.target.checked }))}
+                    style={{ accentColor: '#2563eb', cursor: 'pointer' }}
+                  />
+                  {t('applications.field_req')}
+                </label>
+                <button
+                  onClick={addFieldToDraft}
+                  style={{ padding: '5px 10px', fontSize: 11, borderRadius: 4, border: '1px solid #93c5fd', backgroundColor: '#eff6ff', color: '#1d4ed8', cursor: 'pointer', fontWeight: 600, whiteSpace: 'nowrap', marginLeft: isMobile ? 0 : 'auto' }}
+                >
+                  + {t('applications.add_field')}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -372,10 +381,10 @@ export default function ApplicationsView({
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {forms.map(form => (
             <div key={form.id} style={{ border: '1px solid #d0d7de', borderRadius: 6, backgroundColor: '#fff', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, padding: '10px 14px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, padding: '10px 14px' }}>
+                <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 4 : 10, minWidth: 0 }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{form.title}</span>
-                  <span style={{ fontSize: 10, color: '#6b7280', fontFamily: 'monospace' }}>/apply/{form.slug.length > 30 ? form.slug.slice(0, 30) + '…' : form.slug}</span>
+                  <span style={{ fontSize: 10, color: '#6b7280', fontFamily: 'monospace', wordBreak: 'break-all' }}>/apply/{form.slug.length > 30 ? form.slug.slice(0, 30) + '…' : form.slug}</span>
                   <span style={{
                     fontSize: 10,
                     fontWeight: 600,

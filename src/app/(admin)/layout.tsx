@@ -130,7 +130,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   return (
     <AppStateProvider>
-      <div className="flex min-h-screen" style={{ zoom: 1.35 }}>
+      <div className="flex min-h-screen" style={{ zoom: isMobile ? 1 : 1.35 }}>
         {/* Desktop Sidebar */}
         {!isMobile && (
           <aside
