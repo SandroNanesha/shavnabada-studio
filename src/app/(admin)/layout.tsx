@@ -9,6 +9,27 @@ import type { ReactNode } from 'react'
 import SidebarBrand from '@/components/admin/SidebarBrand'
 import { signOut } from 'next-auth/react'
 
+// Inject studio icon into <head> for PWA home screen
+function StudioIcon() {
+  useEffect(() => {
+    // Remove any existing studio icon links
+    document.querySelectorAll('link[data-studio-icon]').forEach(el => el.remove())
+    // Add fresh ones
+    const apple = document.createElement('link')
+    apple.rel = 'apple-touch-icon'
+    apple.href = '/api/studio-icon'
+    apple.dataset.studioIcon = '1'
+    document.head.appendChild(apple)
+    const icon = document.createElement('link')
+    icon.rel = 'icon'
+    icon.href = '/api/studio-icon'
+    icon.type = 'image/png'
+    icon.dataset.studioIcon = '1'
+    document.head.appendChild(icon)
+  }, [])
+  return null
+}
+
 const navLinks = [
   { href: '/pupils', key: 'nav.pupils' },
   { href: '/teachers', key: 'nav.teachers' },
@@ -130,6 +151,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   return (
     <AppStateProvider>
+      <StudioIcon />
       <div className="flex min-h-screen" style={{ zoom: isMobile ? 1 : 1.35 }}>
         {/* Desktop Sidebar */}
         {!isMobile && (
@@ -172,8 +194,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
         {/* Main content */}
         <main
-          className="flex-1 overflow-auto"
-          style={{ backgroundColor: '#f8f9fa', minWidth: 0 }}
+          className="flex-1"
+          style={{ backgroundColor: '#f8f9fa', minWidth: 0, overflowY: 'auto', overflowX: 'hidden' }}
         >
           {/* Mobile top bar */}
           {isMobile && (

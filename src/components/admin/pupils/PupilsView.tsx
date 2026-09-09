@@ -244,7 +244,7 @@ export default function PupilsView({ pupils, initialNextCursor, groups, classifi
         onStatusToggle={toggleStatus}
       />
 
-      <div className="flex-1 overflow-hidden">
+      <div style={{ flex: 1, minHeight: 0 }}>
         <PupilsTable
           pupils={filteredPupils}
           groups={groups}

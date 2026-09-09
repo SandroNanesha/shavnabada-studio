@@ -15,7 +15,7 @@ export default auth((req) => {
   }
 
   // Public routes
-  if (pathname.startsWith('/apply') || pathname.startsWith('/api/apply') || pathname === '/login' || pathname.startsWith('/api/auth')) {
+  if (pathname.startsWith('/apply') || pathname.startsWith('/api/apply') || pathname === '/login' || pathname.startsWith('/api/auth') || pathname === '/api/studio-icon') {
     return NextResponse.next()
   }
 
