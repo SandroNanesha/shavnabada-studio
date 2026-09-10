@@ -15,6 +15,7 @@ export async function GET() {
       title: r.title,
       slug: r.slug,
       fields: r.fields as unknown as ApplicationFormField[],
+      disabledPredefined: (r.disabledPredefined as unknown as string[]) ?? [],
       active: r.active,
       createdAt: r.createdAt.toISOString(),
     }))
@@ -30,8 +31,8 @@ export async function POST(req: NextRequest) {
   if (!studioId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    const body = await req.json() as { title: string; fields: ApplicationFormField[] }
-    const { title, fields } = body
+    const body = await req.json() as { title: string; fields: ApplicationFormField[]; disabledPredefined?: string[] }
+    const { title, fields, disabledPredefined } = body
 
     if (!title || typeof title !== 'string') {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
         title: title.trim(),
         slug,
         fields: (fields ?? []) as object[],
+        disabledPredefined: (disabledPredefined ?? []) as object[],
         active: true,
         studioId,
       },
@@ -57,6 +59,7 @@ export async function POST(req: NextRequest) {
       title: form.title,
       slug: form.slug,
       fields: form.fields as unknown as ApplicationFormField[],
+      disabledPredefined: (form.disabledPredefined as unknown as string[]) ?? [],
       active: form.active,
       createdAt: form.createdAt.toISOString(),
     }, { status: 201 })

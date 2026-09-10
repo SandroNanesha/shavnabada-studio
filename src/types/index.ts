@@ -78,6 +78,7 @@ export interface ApplicationForm {
   title: string
   slug: string
   fields: ApplicationFormField[]
+  disabledPredefined: string[]
   active: boolean
   createdAt: string
 }

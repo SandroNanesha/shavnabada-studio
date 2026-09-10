@@ -182,14 +182,15 @@ model Payment {
 }
 
 model ApplicationForm {
-  id        String   @id @default(cuid())
-  title     String
-  slug      String   @unique
-  fields    Json     @default("[]")
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  studioId  String
-  studio    Studio   @relation(fields: [studioId], references: [id])
+  id                 String   @id @default(cuid())
+  title              String
+  slug               String   @unique
+  fields             Json     @default("[]")
+  disabledPredefined Json     @default("[]")
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  studioId           String
+  studio             Studio   @relation(fields: [studioId], references: [id])
 
   applications Application[]
 }

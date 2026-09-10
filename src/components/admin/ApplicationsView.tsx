@@ -43,6 +43,7 @@ interface FieldDraft {
 interface FormDraft {
   title: string
   fields: FieldDraft[]
+  disabledPredefined: string[]
 }
 
 function newFieldDraft(): FieldDraft {
@@ -94,7 +95,7 @@ export default function ApplicationsView({
   groups,
   classifications,
 }: ApplicationsViewProps) {
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabType>('forms')
   const [search, setSearch] = useState('')
@@ -151,16 +152,25 @@ export default function ApplicationsView({
   // ---- form editor helpers ----
   const openNewForm = () => {
     setEditingFormId(null)
-    setFormDraft({ title: '', fields: [] })
+    setFormDraft({ title: '', fields: [], disabledPredefined: [] })
     setNewFieldDraftState(newFieldDraft())
     setShowFormEditor(true)
   }
 
   const openEditForm = (form: ApplicationForm) => {
     setEditingFormId(form.id)
-    setFormDraft({ title: form.title, fields: form.fields.map(f => ({ ...f })) })
+    setFormDraft({ title: form.title, fields: form.fields.map(f => ({ ...f })), disabledPredefined: form.disabledPredefined ?? [] })
     setNewFieldDraftState(newFieldDraft())
     setShowFormEditor(true)
+  }
+
+  const togglePredefined = (key: string) => {
+    setFormDraft(prev => ({
+      ...prev,
+      disabledPredefined: prev.disabledPredefined.includes(key)
+        ? prev.disabledPredefined.filter(k => k !== key)
+        : [...prev.disabledPredefined, key],
+    }))
   }
 
   const cancelFormEditor = () => {
@@ -186,7 +196,7 @@ export default function ApplicationsView({
         const res = await fetch(`/api/forms/${editingFormId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: formDraft.title, fields: formDraft.fields }),
+          body: JSON.stringify({ title: formDraft.title, fields: formDraft.fields, disabledPredefined: formDraft.disabledPredefined }),
         })
         if (res.ok) {
           const updated = await res.json() as ApplicationForm
@@ -196,7 +206,7 @@ export default function ApplicationsView({
         const res = await fetch('/api/forms', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: formDraft.title, fields: formDraft.fields }),
+          body: JSON.stringify({ title: formDraft.title, fields: formDraft.fields, disabledPredefined: formDraft.disabledPredefined }),
         })
         if (res.ok) {
           const created = await res.json() as ApplicationForm
@@ -269,19 +279,30 @@ export default function ApplicationsView({
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {[
-                { label: 'First Name', type: 'text' },
-                { label: 'Last Name', type: 'text' },
-                { label: 'Birth Date', type: 'date' },
-                { label: 'Personal ID Number', type: 'text' },
-                { label: 'Parent Name + Phone', type: 'text' },
-              ].map(f => (
-                <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 8, backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 4, padding: '5px 10px' }}>
-                  <span style={{ fontSize: 12, flex: 1, color: '#374151' }}>{f.label}</span>
-                  <span style={{ fontSize: 10, color: '#6b7280', backgroundColor: '#e2e8f0', padding: '1px 6px', borderRadius: 10 }}>{f.type}</span>
-                  <span style={{ fontSize: 10, color: '#dc2626' }}>*</span>
-                  <span style={{ fontSize: 10, color: '#94a3b8', fontStyle: 'italic' }}>{t('applications.field_fixed')}</span>
-                </div>
-              ))}
+                { key: 'firstName', label: t('applications.predefined_first_name'), type: 'text' },
+                { key: 'lastName', label: t('applications.predefined_last_name'), type: 'text' },
+                { key: 'birthDate', label: t('applications.predefined_birth_date'), type: 'date' },
+                { key: 'idNumber', label: t('applications.predefined_id_number'), type: 'text' },
+                { key: 'parents', label: t('applications.predefined_parent'), type: 'text' },
+              ].map(f => {
+                const disabled = formDraft.disabledPredefined.includes(f.key)
+                return (
+                  <div key={f.key} style={{ display: 'flex', alignItems: 'center', gap: 8, backgroundColor: disabled ? '#fef2f2' : '#f8fafc', border: `1px solid ${disabled ? '#fca5a5' : '#e2e8f0'}`, borderRadius: 4, padding: '5px 10px', opacity: disabled ? 0.6 : 1 }}>
+                    <span style={{ fontSize: 12, flex: 1, color: disabled ? '#9ca3af' : '#374151', textDecoration: disabled ? 'line-through' : 'none' }}>{f.label}</span>
+                    <span style={{ fontSize: 10, color: '#6b7280', backgroundColor: '#e2e8f0', padding: '1px 6px', borderRadius: 10 }}>{f.type}</span>
+                    {!disabled && <span style={{ fontSize: 10, color: '#dc2626' }}>*</span>}
+                    <button
+                      onClick={() => togglePredefined(f.key)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: disabled ? '#16a34a' : '#9ca3af', display: 'flex', alignItems: 'center', padding: 2, fontSize: 10, fontWeight: 600 }}
+                      onMouseEnter={e => (e.currentTarget.style.color = disabled ? '#15803d' : '#dc2626')}
+                      onMouseLeave={e => (e.currentTarget.style.color = disabled ? '#16a34a' : '#9ca3af')}
+                      title={disabled ? 'Restore' : 'Remove'}
+                    >
+                      {disabled ? '↩' : <TrashIcon />}
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           </div>
 
@@ -475,7 +496,7 @@ export default function ApplicationsView({
           style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', fontSize: 11, borderRadius: 4, border: '1px solid #d0d7de', backgroundColor: '#f6f8fa', color: '#374151', cursor: 'pointer' }}
         >
           <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fillRule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3M3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9z"/></svg>
-          Refresh
+          {t('applications.refresh')}
         </button>
       </div>
 
@@ -541,7 +562,7 @@ export default function ApplicationsView({
         ) : (
           <div className="space-y-3">
             {filtered.map(app => {
-              const submittedDate = new Date(app.submittedAt).toLocaleDateString('en-GB', {
+              const submittedDate = new Date(app.submittedAt).toLocaleDateString(lang === 'ka' ? 'ka-GE' : 'en-GB', {
                 day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
               })
 

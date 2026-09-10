@@ -13,7 +13,7 @@ export async function PATCH(
 
   try {
     const { id } = await params
-    const body = await req.json() as { title?: string; fields?: ApplicationFormField[]; active?: boolean }
+    const body = await req.json() as { title?: string; fields?: ApplicationFormField[]; disabledPredefined?: string[]; active?: boolean }
 
     const existing = await prisma.applicationForm.findUnique({ where: { id, studioId } })
     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -23,6 +23,7 @@ export async function PATCH(
       data: {
         ...(body.title !== undefined ? { title: body.title.trim() } : {}),
         ...(body.fields !== undefined ? { fields: body.fields as object[] } : {}),
+        ...(body.disabledPredefined !== undefined ? { disabledPredefined: body.disabledPredefined as object[] } : {}),
         ...(body.active !== undefined ? { active: body.active } : {}),
       },
     })
@@ -32,6 +33,7 @@ export async function PATCH(
       title: form.title,
       slug: form.slug,
       fields: form.fields as unknown as ApplicationFormField[],
+      disabledPredefined: (form.disabledPredefined as unknown as string[]) ?? [],
       active: form.active,
       createdAt: form.createdAt.toISOString(),
     })

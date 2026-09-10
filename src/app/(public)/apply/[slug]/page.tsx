@@ -9,6 +9,7 @@ interface FormDef {
   id: string
   title: string
   fields: ApplicationFormField[]
+  disabledPredefined: string[]
 }
 
 export default function ApplySlugPage() {
@@ -235,29 +236,42 @@ export default function ApplySlugPage() {
           {/* Pupil Info */}
           <section style={{ marginBottom: 32 }}>
             <h2 style={sectionHeaderStyle}>{t('apply.pupil_info')}</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-              <div>
-                <label style={labelStyle}>{t('apply.first_name')} <span style={{ color: '#ef4444' }}>*</span></label>
-                <input type="text" required value={firstName} onChange={e => setFirstName(e.target.value)} style={inputStyle} placeholder={t('apply.first_name')} />
+            {((!formDef.disabledPredefined.includes('firstName')) || (!formDef.disabledPredefined.includes('lastName'))) && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                {!formDef.disabledPredefined.includes('firstName') && (
+                  <div>
+                    <label style={labelStyle}>{t('apply.first_name')} <span style={{ color: '#ef4444' }}>*</span></label>
+                    <input type="text" required value={firstName} onChange={e => setFirstName(e.target.value)} style={inputStyle} placeholder={t('apply.first_name')} />
+                  </div>
+                )}
+                {!formDef.disabledPredefined.includes('lastName') && (
+                  <div>
+                    <label style={labelStyle}>{t('apply.last_name')} <span style={{ color: '#ef4444' }}>*</span></label>
+                    <input type="text" required value={surname} onChange={e => setSurname(e.target.value)} style={inputStyle} placeholder={t('apply.last_name')} />
+                  </div>
+                )}
               </div>
-              <div>
-                <label style={labelStyle}>{t('apply.last_name')} <span style={{ color: '#ef4444' }}>*</span></label>
-                <input type="text" required value={surname} onChange={e => setSurname(e.target.value)} style={inputStyle} placeholder={t('apply.last_name')} />
+            )}
+            {((!formDef.disabledPredefined.includes('birthDate')) || (!formDef.disabledPredefined.includes('idNumber'))) && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                {!formDef.disabledPredefined.includes('birthDate') && (
+                  <div>
+                    <label style={labelStyle}>{t('apply.birth_date')} <span style={{ color: '#ef4444' }}>*</span></label>
+                    <input type="date" required value={birthDate} onChange={e => setBirthDate(e.target.value)} style={inputStyle} />
+                  </div>
+                )}
+                {!formDef.disabledPredefined.includes('idNumber') && (
+                  <div>
+                    <label style={labelStyle}>{t('pupils.id_number')} <span style={{ color: '#ef4444' }}>*</span></label>
+                    <input type="text" required value={idNumber} onChange={e => setIdNumber(e.target.value)} style={{ ...inputStyle, fontFamily: 'monospace' }} placeholder={t('pupils.id_number_placeholder')} />
+                  </div>
+                )}
               </div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div>
-                <label style={labelStyle}>{t('apply.birth_date')} <span style={{ color: '#ef4444' }}>*</span></label>
-                <input type="date" required value={birthDate} onChange={e => setBirthDate(e.target.value)} style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>{t('pupils.id_number')} <span style={{ color: '#ef4444' }}>*</span></label>
-                <input type="text" required value={idNumber} onChange={e => setIdNumber(e.target.value)} style={{ ...inputStyle, fontFamily: 'monospace' }} placeholder={t('pupils.id_number_placeholder')} />
-              </div>
-            </div>
+            )}
           </section>
 
           {/* Parents */}
+          {!formDef.disabledPredefined.includes('parents') && (
           <section style={{ marginBottom: 32 }}>
             <h2 style={sectionHeaderStyle}>{t('apply.parents_section')}</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -293,6 +307,7 @@ export default function ApplySlugPage() {
               + {t('apply.add_parent')}
             </button>
           </section>
+          )}
 
           {/* Custom fields */}
           {formDef.fields.length > 0 && (

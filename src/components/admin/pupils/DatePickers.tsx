@@ -100,9 +100,9 @@ export function DatePicker({ value, onChange }: DatePickerProps) {
   )
 }
 
-// ── Month picker (start month): YYYY-MM-DD with day always 01 ─────────────────
+// ── Month picker (start date): YYYY-MM-DD with selectable day ────────────────
 interface MonthPickerProps {
-  value: string          // YYYY-MM-DD — day portion ignored/set to 01
+  value: string          // YYYY-MM-DD
   onChange: (v: string) => void
 }
 
@@ -110,12 +110,20 @@ export function MonthPicker({ value, onChange }: MonthPickerProps) {
   const monthNames = useMonthNames()
   const now = new Date()
 
-  const parts = value.match(/^(\d{4})-(\d{2})/)
+  const parts = value.match(/^(\d{4})-(\d{2})-(\d{2})/)
   const year  = parts ? parseInt(parts[1], 10) : now.getFullYear()
   const month = parts ? parseInt(parts[2], 10) : now.getMonth() + 1
+  const day   = parts ? parseInt(parts[3], 10) : 1
 
-  const emit = (y: number, m: number) =>
-    onChange(`${y}-${String(m).padStart(2, '0')}-01`)
+  const emit = (y: number, m: number, d: number) =>
+    onChange(`${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`)
+
+  const handleMonth = (m: number) => {
+    const maxDay = new Date(year, m, 0).getDate()
+    emit(year, m, day > maxDay ? 1 : day)
+  }
+
+  const daysInMonth = new Date(year, month, 0).getDate()
 
   const years: number[] = []
   for (let y = 2020; y <= now.getFullYear() + 1; y++) years.push(y)
@@ -123,18 +131,27 @@ export function MonthPicker({ value, onChange }: MonthPickerProps) {
   return (
     <div style={{ display: 'flex', gap: 4 }}>
       <select
-        value={year}
-        onChange={e => emit(Number(e.target.value), month)}
-        style={{ ...sel, flex: '0 0 72px' }}
+        value={day}
+        onChange={e => emit(year, month, Number(e.target.value))}
+        style={{ ...sel, flex: '0 0 50px' }}
       >
-        {years.map(y => <option key={y} value={y}>{y}</option>)}
+        {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d =>
+          <option key={d} value={d}>{d}</option>
+        )}
       </select>
       <select
         value={month}
-        onChange={e => emit(year, Number(e.target.value))}
+        onChange={e => handleMonth(Number(e.target.value))}
         style={{ ...sel, flex: 1 }}
       >
         {monthNames.map((name, i) => <option key={i + 1} value={i + 1}>{name}</option>)}
+      </select>
+      <select
+        value={year}
+        onChange={e => emit(Number(e.target.value), month, day)}
+        style={{ ...sel, flex: '0 0 72px' }}
+      >
+        {years.map(y => <option key={y} value={y}>{y}</option>)}
       </select>
     </div>
   )

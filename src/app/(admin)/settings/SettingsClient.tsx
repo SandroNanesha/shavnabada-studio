@@ -6,6 +6,7 @@ import { useLanguage } from '@/lib/i18n/context'
 
 interface Props {
   initialSettings: { studioName: string; futureMonths: number; paymentDueDay: number; platformLogo: string; formLogo: string }
+  adminEmail: string
 }
 
 const sectionStyle: React.CSSProperties = {
@@ -67,7 +68,7 @@ function LogoUpload({ label, noLogoLabel, removeLabel, value, onChange }: {
   )
 }
 
-export default function SettingsClient({ initialSettings }: Props) {
+export default function SettingsClient({ initialSettings, adminEmail }: Props) {
   const { t, lang } = useLanguage()
   const { setFutureMonths, setPaymentDueDay, setStudioName, setPlatformLogo, setFormLogo } = useAppState()
 
@@ -78,6 +79,37 @@ export default function SettingsClient({ initialSettings }: Props) {
   const [formLogo, setFormLogoState] = useState(initialSettings.formLogo ?? '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [pwError, setPwError] = useState('')
+  const [pwSaving, setPwSaving] = useState(false)
+  const [pwSaved, setPwSaved] = useState(false)
+
+  const changePassword = async () => {
+    setPwError('')
+    if (newPassword.length < 8) { setPwError(t('settings.password_min8')); return }
+    if (newPassword !== confirmPassword) { setPwError(t('settings.password_mismatch')); return }
+    setPwSaving(true)
+    try {
+      const res = await fetch('/api/account/password', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      })
+      if (!res.ok) {
+        const { error } = await res.json() as { error: string }
+        setPwError(error === 'wrong_current' ? t('settings.password_wrong_current') : t('settings.password_min8'))
+        return
+      }
+      setCurrentPassword(''); setNewPassword(''); setConfirmPassword('')
+      setPwSaved(true)
+      setTimeout(() => setPwSaved(false), 2500)
+    } finally {
+      setPwSaving(false)
+    }
+  }
 
   const save = async () => {
     setSaving(true)
@@ -109,6 +141,37 @@ export default function SettingsClient({ initialSettings }: Props) {
   return (
     <div style={{ padding: 24, maxWidth: 560 }}>
       <h1 style={{ fontSize: 16, fontWeight: 700, color: '#111827', marginBottom: 20 }}>{t('settings.title')}</h1>
+
+      {/* Account */}
+      <div style={sectionStyle}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 14 }}>{t('settings.account_section')}</div>
+        <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 16 }}>
+          {t('settings.logged_in_as')}: <span style={{ fontWeight: 600, color: '#111827', fontFamily: 'monospace' }}>{adminEmail}</span>
+        </div>
+
+        <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 10 }}>{t('settings.change_password')}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div>
+            <label style={labelStyle}>{t('settings.current_password')}</label>
+            <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
+          </div>
+          <div>
+            <label style={labelStyle}>{t('settings.new_password')}</label>
+            <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
+          </div>
+          <div>
+            <label style={labelStyle}>{t('settings.confirm_password')}</label>
+            <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
+          </div>
+          {pwError && <div style={{ fontSize: 11, color: '#dc2626' }}>{pwError}</div>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={changePassword} disabled={pwSaving} style={{ ...btnStyle, opacity: pwSaving ? 0.6 : 1 }}>
+              {pwSaving ? t('settings.saving_btn') : t('settings.change_password')}
+            </button>
+            {pwSaved && <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 600 }}>{t('settings.password_changed')}</span>}
+          </div>
+        </div>
+      </div>
 
       {/* Studio */}
       <div style={sectionStyle}>

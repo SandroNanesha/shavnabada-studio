@@ -16,6 +16,7 @@ export async function GET(
       id: form.id,
       title: form.title,
       fields: form.fields as unknown as ApplicationFormField[],
+      disabledPredefined: (form.disabledPredefined as unknown as string[]) ?? [],
     })
   } catch {
     return NextResponse.json({ error: 'Failed to fetch form' }, { status: 500 })

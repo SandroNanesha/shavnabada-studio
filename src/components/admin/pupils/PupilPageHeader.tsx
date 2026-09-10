@@ -34,6 +34,16 @@ export default function PupilPageHeader({ pupil, pupilTags }: PupilPageHeaderPro
   const displayBirthDate = edit?.birthDate ?? pupil.birthDate
   const displayParents = edit?.parents ?? pupil.parents
 
+  const age = (() => {
+    if (!displayBirthDate) return null
+    const today = new Date()
+    const birth = new Date(displayBirthDate)
+    let a = today.getFullYear() - birth.getFullYear()
+    const m = today.getMonth() - birth.getMonth()
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) a--
+    return a
+  })()
+
   return (
     <>
       <Link href="/pupils" style={{ fontSize: 12, color: '#1d4ed8', textDecoration: 'none' }} className="hover:underline">
@@ -44,27 +54,34 @@ export default function PupilPageHeader({ pupil, pupilTags }: PupilPageHeaderPro
         {/* Name + badges row */}
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
           {/* Name + inline badges */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-            <h1 className="text-xl font-bold text-gray-900" style={{ color: isArchived ? '#9ca3af' : undefined, margin: 0 }}>
-              {displayName}
-            </h1>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', gap: 8, flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <h1 className="text-xl font-bold text-gray-900" style={{ color: isArchived ? '#9ca3af' : undefined, margin: 0 }}>
+                {displayName}
+              </h1>
+              {age !== null && (
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#374151' }}>
+                  {t('pupils.age_label')}: {age}
+                </span>
+              )}
+            </div>
             {badge && (
-              <span style={{ backgroundColor: badge.bg, color: badge.text, padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+              <span style={{ backgroundColor: badge.bg, color: badge.text, padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', marginTop: 8 }}>
                 {badge.label}
               </span>
             )}
             {isArchived && (
-              <span style={{ backgroundColor: '#f3f4f6', color: '#6b7280', border: '1px solid #d1d5db', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+              <span style={{ backgroundColor: '#f3f4f6', color: '#6b7280', border: '1px solid #d1d5db', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', marginTop: 8 }}>
                 {t('pupils.inactive')}
               </span>
             )}
             {displayIdNumber && (
-              <span style={{ fontSize: 11, color: '#6b7280', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 11, color: '#6b7280', fontFamily: 'monospace', whiteSpace: 'nowrap', marginTop: 8 }}>
                 {t('pupils.id_number')}: {displayIdNumber}
               </span>
             )}
             {pupilTags.map(tag => (
-              <span key={tag.id} style={{ backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', padding: '1px 7px', borderRadius: 10, fontSize: 11, whiteSpace: 'nowrap' }}>
+              <span key={tag.id} style={{ backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', padding: '1px 7px', borderRadius: 10, fontSize: 11, whiteSpace: 'nowrap', marginTop: 8 }}>
                 {tag.label}
               </span>
             ))}
@@ -119,7 +136,7 @@ export default function PupilPageHeader({ pupil, pupilTags }: PupilPageHeaderPro
             </div>
           )}
           {displayBirthDate && (
-            <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 6 }}>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 8 }}>
               {t('pupil_detail.date')}: {displayBirthDate}
             </div>
           )}

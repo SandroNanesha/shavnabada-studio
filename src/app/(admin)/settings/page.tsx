@@ -5,7 +5,7 @@ import { requireStudioSession } from '@/lib/session'
 export const dynamic = 'force-dynamic'
 
 export default async function SettingsPage() {
-  const { studioId } = await requireStudioSession()
+  const { studioId, email } = await requireStudioSession()
 
   const s = await prisma.settings.upsert({
     where: { studioId },
@@ -21,5 +21,5 @@ export default async function SettingsPage() {
     formLogo: s.formLogo,
   }
 
-  return <SettingsClient initialSettings={settings} />
+  return <SettingsClient initialSettings={settings} adminEmail={email} />
 }
