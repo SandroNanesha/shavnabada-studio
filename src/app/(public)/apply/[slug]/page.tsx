@@ -20,6 +20,7 @@ export default function ApplySlugPage() {
   const [notFound, setNotFound] = useState(false)
   const [loading, setLoading] = useState(true)
   const [formLogo, setFormLogo] = useState('')
+  const [isMobile, setIsMobile] = useState(false)
 
   const [firstName, setFirstName] = useState('')
   const [surname, setSurname] = useState('')
@@ -31,6 +32,13 @@ export default function ApplySlugPage() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [submitError, setSubmitError] = useState('')
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 600)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     if (!slug) return
@@ -121,8 +129,16 @@ export default function ApplySlugPage() {
     borderBottom: '2px solid #e5e7eb',
   }
 
+  const twoCol: React.CSSProperties = {
+    display: 'grid',
+    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+    gap: isMobile ? 12 : 16,
+  }
+
+  const pad = isMobile ? '20px 16px' : '32px 36px'
+
   const langToggle = (
-    <div style={{ maxWidth: 640, margin: '0 auto', display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+    <div style={{ maxWidth: 640, margin: '0 auto', display: 'flex', justifyContent: 'flex-end', marginBottom: 12, paddingRight: isMobile ? 0 : 0 }}>
       <div style={{ display: 'flex', gap: 4 }}>
         {(['en', 'ka'] as const).map(l => (
           <button
@@ -172,7 +188,7 @@ export default function ApplySlugPage() {
   if (submitted) {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <div style={{ backgroundColor: '#fff', borderRadius: 10, padding: '40px 48px', maxWidth: 480, textAlign: 'center', border: '1px solid #e5e7eb', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
+        <div style={{ backgroundColor: '#fff', borderRadius: 10, padding: isMobile ? '32px 24px' : '40px 48px', maxWidth: 480, width: '100%', textAlign: 'center', border: '1px solid #e5e7eb', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🎵</div>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 12 }}>
             {lang === 'ka' ? 'გმადლობთ!' : 'Thank you!'}
@@ -214,104 +230,112 @@ export default function ApplySlugPage() {
     )
   }
 
+  const dp = formDef.disabledPredefined
+
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: '32px 16px' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: isMobile ? '16px 12px' : '32px 16px' }}>
       {langToggle}
 
-      <div style={{ maxWidth: 640, margin: '0 auto', backgroundColor: '#fff', borderRadius: 10, border: '1px solid #e5e7eb', boxShadow: '0 4px 16px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+      <div style={{ maxWidth: 640, margin: '0 auto', backgroundColor: '#fff', borderRadius: isMobile ? 8 : 10, border: '1px solid #e5e7eb', boxShadow: '0 4px 16px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
         {/* Header */}
-        <div style={{ backgroundColor: '#1e293b', color: '#fff', padding: '28px 36px' }}>
+        <div style={{ backgroundColor: '#1e293b', color: '#fff', padding: isMobile ? '20px 16px' : '28px 36px' }}>
           {formLogo && (
-            <img src={formLogo} alt="logo" style={{ height: 48, maxWidth: 160, objectFit: 'contain', marginBottom: 16, display: 'block' }} />
+            <img src={formLogo} alt="logo" style={{ height: 40, maxWidth: 140, objectFit: 'contain', marginBottom: 12, display: 'block' }} />
           )}
-          <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>
+          <div style={{ fontSize: isMobile ? 18 : 22, fontWeight: 800, marginBottom: 4 }}>
             {formDef.title}
           </div>
-          <div style={{ fontSize: 14, color: '#94a3b8' }}>
+          <div style={{ fontSize: 13, color: '#94a3b8' }}>
             {t('apply.subtitle')}
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ padding: '32px 36px' }}>
+        <form onSubmit={handleSubmit} style={{ padding: pad }}>
           {/* Pupil Info */}
-          <section style={{ marginBottom: 32 }}>
-            <h2 style={sectionHeaderStyle}>{t('apply.pupil_info')}</h2>
-            {((!formDef.disabledPredefined.includes('firstName')) || (!formDef.disabledPredefined.includes('lastName'))) && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-                {!formDef.disabledPredefined.includes('firstName') && (
-                  <div>
-                    <label style={labelStyle}>{t('apply.first_name')} <span style={{ color: '#ef4444' }}>*</span></label>
-                    <input type="text" required value={firstName} onChange={e => setFirstName(e.target.value)} style={inputStyle} placeholder={t('apply.first_name')} />
+          {(!dp.includes('firstName') || !dp.includes('lastName') || !dp.includes('birthDate') || !dp.includes('idNumber')) && (
+            <section style={{ marginBottom: 28 }}>
+              <h2 style={sectionHeaderStyle}>{t('apply.pupil_info')}</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {(!dp.includes('firstName') || !dp.includes('lastName')) && (
+                  <div style={twoCol}>
+                    {!dp.includes('firstName') && (
+                      <div>
+                        <label style={labelStyle}>{t('apply.first_name')} <span style={{ color: '#ef4444' }}>*</span></label>
+                        <input type="text" required value={firstName} onChange={e => setFirstName(e.target.value)} style={inputStyle} placeholder={t('apply.first_name')} />
+                      </div>
+                    )}
+                    {!dp.includes('lastName') && (
+                      <div>
+                        <label style={labelStyle}>{t('apply.last_name')} <span style={{ color: '#ef4444' }}>*</span></label>
+                        <input type="text" required value={surname} onChange={e => setSurname(e.target.value)} style={inputStyle} placeholder={t('apply.last_name')} />
+                      </div>
+                    )}
                   </div>
                 )}
-                {!formDef.disabledPredefined.includes('lastName') && (
-                  <div>
-                    <label style={labelStyle}>{t('apply.last_name')} <span style={{ color: '#ef4444' }}>*</span></label>
-                    <input type="text" required value={surname} onChange={e => setSurname(e.target.value)} style={inputStyle} placeholder={t('apply.last_name')} />
+                {(!dp.includes('birthDate') || !dp.includes('idNumber')) && (
+                  <div style={twoCol}>
+                    {!dp.includes('birthDate') && (
+                      <div>
+                        <label style={labelStyle}>{t('apply.birth_date')} <span style={{ color: '#ef4444' }}>*</span></label>
+                        <input type="date" required value={birthDate} onChange={e => setBirthDate(e.target.value)} style={inputStyle} />
+                      </div>
+                    )}
+                    {!dp.includes('idNumber') && (
+                      <div>
+                        <label style={labelStyle}>{t('pupils.id_number')} <span style={{ color: '#ef4444' }}>*</span></label>
+                        <input type="text" required value={idNumber} onChange={e => setIdNumber(e.target.value)} style={{ ...inputStyle, fontFamily: 'monospace' }} placeholder={t('pupils.id_number_placeholder')} />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-            {((!formDef.disabledPredefined.includes('birthDate')) || (!formDef.disabledPredefined.includes('idNumber'))) && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                {!formDef.disabledPredefined.includes('birthDate') && (
-                  <div>
-                    <label style={labelStyle}>{t('apply.birth_date')} <span style={{ color: '#ef4444' }}>*</span></label>
-                    <input type="date" required value={birthDate} onChange={e => setBirthDate(e.target.value)} style={inputStyle} />
-                  </div>
-                )}
-                {!formDef.disabledPredefined.includes('idNumber') && (
-                  <div>
-                    <label style={labelStyle}>{t('pupils.id_number')} <span style={{ color: '#ef4444' }}>*</span></label>
-                    <input type="text" required value={idNumber} onChange={e => setIdNumber(e.target.value)} style={{ ...inputStyle, fontFamily: 'monospace' }} placeholder={t('pupils.id_number_placeholder')} />
-                  </div>
-                )}
-              </div>
-            )}
-          </section>
+            </section>
+          )}
 
           {/* Parents */}
-          {!formDef.disabledPredefined.includes('parents') && (
-          <section style={{ marginBottom: 32 }}>
-            <h2 style={sectionHeaderStyle}>{t('apply.parents_section')}</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {parents.map((parent, i) => (
-                <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16, backgroundColor: '#f9fafb', position: 'relative' }}>
-                  {i > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => removeParent(i)}
-                      style={{ position: 'absolute', top: 10, right: 12, background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}
-                    >
-                      {t('apply.remove_parent')}
-                    </button>
-                  )}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div>
-                      <label style={labelStyle}>{t('apply.parent_name')} {i === 0 && <span style={{ color: '#ef4444' }}>*</span>}</label>
-                      <input type="text" required={i === 0} value={parent.name} onChange={e => updateParent(i, 'name', e.target.value)} style={inputStyle} placeholder={t('apply.parent_name')} />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>{t('apply.parent_phone')} {i === 0 && <span style={{ color: '#ef4444' }}>*</span>}</label>
-                      <input type="tel" required={i === 0} value={parent.phone} onChange={e => updateParent(i, 'phone', e.target.value)} style={inputStyle} placeholder="+995 5XX XXX XXX" />
+          {!dp.includes('parents') && (
+            <section style={{ marginBottom: 28 }}>
+              <h2 style={sectionHeaderStyle}>{t('apply.parents_section')}</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {parents.map((parent, i) => (
+                  <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: isMobile ? '12px 12px 12px' : 16, backgroundColor: '#f9fafb' }}>
+                    {i > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                        <button
+                          type="button"
+                          onClick={() => removeParent(i)}
+                          style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: 11, fontWeight: 600, padding: 0 }}
+                        >
+                          {t('apply.remove_parent')}
+                        </button>
+                      </div>
+                    )}
+                    <div style={twoCol}>
+                      <div>
+                        <label style={labelStyle}>{t('apply.parent_name')} {i === 0 && <span style={{ color: '#ef4444' }}>*</span>}</label>
+                        <input type="text" required={i === 0} value={parent.name} onChange={e => updateParent(i, 'name', e.target.value)} style={inputStyle} placeholder={t('apply.parent_name')} />
+                      </div>
+                      <div>
+                        <label style={labelStyle}>{t('apply.parent_phone')} {i === 0 && <span style={{ color: '#ef4444' }}>*</span>}</label>
+                        <input type="tel" required={i === 0} value={parent.phone} onChange={e => updateParent(i, 'phone', e.target.value)} style={inputStyle} placeholder="+995 5XX XXX XXX" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={addParent}
-              style={{ marginTop: 12, padding: '8px 16px', fontSize: 12, border: '1px dashed #d1d5db', borderRadius: 6, backgroundColor: 'transparent', color: '#6b7280', cursor: 'pointer', fontWeight: 500 }}
-            >
-              + {t('apply.add_parent')}
-            </button>
-          </section>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={addParent}
+                style={{ marginTop: 12, padding: '8px 16px', fontSize: 12, border: '1px dashed #d1d5db', borderRadius: 6, backgroundColor: 'transparent', color: '#6b7280', cursor: 'pointer', fontWeight: 500 }}
+              >
+                + {t('apply.add_parent')}
+              </button>
+            </section>
           )}
 
           {/* Custom fields */}
           {formDef.fields.length > 0 && (
-            <section style={{ marginBottom: 32 }}>
+            <section style={{ marginBottom: 28 }}>
               <h2 style={sectionHeaderStyle}>{t('apply.additional_info')}</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {formDef.fields.map(field => (
@@ -336,7 +360,7 @@ export default function ApplySlugPage() {
           <button
             type="submit"
             disabled={submitting}
-            style={{ width: '100%', padding: 14, backgroundColor: submitting ? '#94a3b8' : '#1e293b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', transition: 'background-color 0.15s', letterSpacing: '0.01em' }}
+            style={{ width: '100%', padding: 14, backgroundColor: submitting ? '#94a3b8' : '#1e293b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', letterSpacing: '0.01em' }}
           >
             {submitting ? t('apply.submitting') : t('apply.submit')}
           </button>

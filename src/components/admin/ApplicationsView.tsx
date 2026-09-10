@@ -134,6 +134,7 @@ export default function ApplicationsView({
   const [formDraft, setFormDraft] = useState<FormDraft>({ title: '', fields: [], disabledPredefined: [] })
   const [newFieldDraftState, setNewFieldDraftState] = useState<FieldDraft>(newFieldDraft())
   const [savingForm, setSavingForm] = useState(false)
+  const [formSaveError, setFormSaveError] = useState('')
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null)
 
   // ---- add-as-pupil state ----
@@ -154,6 +155,7 @@ export default function ApplicationsView({
     setEditingFormId(null)
     setFormDraft({ title: '', fields: [], disabledPredefined: [] })
     setNewFieldDraftState(newFieldDraft())
+    setFormSaveError('')
     setShowFormEditor(true)
   }
 
@@ -161,6 +163,7 @@ export default function ApplicationsView({
     setEditingFormId(form.id)
     setFormDraft({ title: form.title, fields: form.fields.map(f => ({ ...f })), disabledPredefined: form.disabledPredefined ?? [] })
     setNewFieldDraftState(newFieldDraft())
+    setFormSaveError('')
     setShowFormEditor(true)
   }
 
@@ -191,6 +194,7 @@ export default function ApplicationsView({
   const saveForm = async () => {
     if (!formDraft.title.trim()) return
     setSavingForm(true)
+    setFormSaveError('')
     try {
       if (editingFormId) {
         const res = await fetch(`/api/forms/${editingFormId}`, {
@@ -201,6 +205,11 @@ export default function ApplicationsView({
         if (res.ok) {
           const updated = await res.json() as ApplicationForm
           setForms(prev => prev.map(f => f.id === editingFormId ? updated : f))
+          setShowFormEditor(false)
+          setEditingFormId(null)
+        } else {
+          const err = await res.json().catch(() => ({})) as { error?: string }
+          setFormSaveError(err.error ?? t('common.error'))
         }
       } else {
         const res = await fetch('/api/forms', {
@@ -211,10 +220,15 @@ export default function ApplicationsView({
         if (res.ok) {
           const created = await res.json() as ApplicationForm
           setForms(prev => [created, ...prev])
+          setShowFormEditor(false)
+          setEditingFormId(null)
+        } else {
+          const err = await res.json().catch(() => ({})) as { error?: string }
+          setFormSaveError(err.error ?? t('common.error'))
         }
       }
-      setShowFormEditor(false)
-      setEditingFormId(null)
+    } catch {
+      setFormSaveError(t('common.error'))
     } finally {
       setSavingForm(false)
     }
@@ -377,6 +391,9 @@ export default function ApplicationsView({
           </div>
 
           {/* Save/Cancel */}
+          {formSaveError && (
+            <div style={{ fontSize: 11, color: '#dc2626', marginBottom: 8 }}>{formSaveError}</div>
+          )}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
             <button
               onClick={cancelFormEditor}
