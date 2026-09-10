@@ -131,7 +131,7 @@ export default function ApplicationsView({
   const [forms, setForms] = useState<ApplicationForm[]>(initialForms)
   const [showFormEditor, setShowFormEditor] = useState(false)
   const [editingFormId, setEditingFormId] = useState<string | null>(null)
-  const [formDraft, setFormDraft] = useState<FormDraft>({ title: '', fields: [] })
+  const [formDraft, setFormDraft] = useState<FormDraft>({ title: '', fields: [], disabledPredefined: [] })
   const [newFieldDraftState, setNewFieldDraftState] = useState<FieldDraft>(newFieldDraft())
   const [savingForm, setSavingForm] = useState(false)
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null)

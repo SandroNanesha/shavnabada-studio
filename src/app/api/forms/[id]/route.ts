@@ -23,7 +23,7 @@ export async function PATCH(
       data: {
         ...(body.title !== undefined ? { title: body.title.trim() } : {}),
         ...(body.fields !== undefined ? { fields: body.fields as object[] } : {}),
-        ...(body.disabledPredefined !== undefined ? { disabledPredefined: body.disabledPredefined as object[] } : {}),
+        ...(body.disabledPredefined !== undefined ? { disabledPredefined: body.disabledPredefined as unknown as object[] } : {}),
         ...(body.active !== undefined ? { active: body.active } : {}),
       },
     })

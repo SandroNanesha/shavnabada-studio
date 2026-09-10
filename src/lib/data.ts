@@ -220,6 +220,7 @@ export async function getForms(studioId: string): Promise<ApplicationForm[]> {
     title: r.title,
     slug: r.slug,
     fields: r.fields as unknown as ApplicationFormField[],
+    disabledPredefined: (r.disabledPredefined as unknown as string[]) ?? [],
     active: r.active,
     createdAt: r.createdAt.toISOString(),
   }))

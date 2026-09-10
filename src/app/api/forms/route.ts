@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
         title: title.trim(),
         slug,
         fields: (fields ?? []) as object[],
-        disabledPredefined: (disabledPredefined ?? []) as object[],
+        disabledPredefined: (disabledPredefined ?? []) as unknown as object[],
         active: true,
         studioId,
       },
